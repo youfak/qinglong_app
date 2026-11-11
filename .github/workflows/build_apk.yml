@@ -40,20 +40,23 @@ jobs:
 
       - name: Ensure Gradle Wrapper exists
         run: |
-          if [ ! -f "android/gradlew" ]; then
-            echo "Generating gradlew from Flutter..."
+          if [ ! -f "android/gradlew" ] || [ ! -f "android/gradle/wrapper/gradle-wrapper.jar" ]; then
+            echo "Generating Gradle files from Flutter template..."
             flutter create /tmp/temp_project --platforms=android
             cp /tmp/temp_project/android/gradlew android/
             chmod +x android/gradlew
+            mkdir -p android/gradle/wrapper
+            if [ -f "/tmp/temp_project/android/gradle/wrapper/gradle-wrapper.jar" ]; then
+              cp /tmp/temp_project/android/gradle/wrapper/gradle-wrapper.jar android/gradle/wrapper/
+            fi
             rm -rf /tmp/temp_project
           fi
 
           if [ ! -f "android/gradle/wrapper/gradle-wrapper.jar" ]; then
-            echo "Fetching gradle-wrapper.jar for Gradle 6.7..."
-            mkdir -p android/gradle/wrapper
+            echo "Fallback: Downloading gradle-wrapper.jar directly..."
             curl -sLO https://services.gradle.org/distributions/gradle-6.7-bin.zip
-            unzip -q -o gradle-6.7-bin.zip "gradle-6.7/lib/plugins/gradle-wrapper-*.jar"
-            mv gradle-6.7/lib/plugins/gradle-wrapper-*.jar android/gradle/wrapper/gradle-wrapper.jar
+            unzip -q -o gradle-6.7-bin.zip "*gradle-wrapper*"
+            find . -name "*gradle-wrapper*.jar" -exec cp {} android/gradle/wrapper/gradle-wrapper.jar \;
             rm -rf gradle-6.7*
           fi
 
