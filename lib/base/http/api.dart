@@ -1,5 +1,6 @@
 import 'package:qinglong_app/base/http/http.dart';
 import 'package:qinglong_app/base/http/url.dart';
+import 'package:qinglong_app/base/userinfo_viewmodel.dart';
 import 'package:qinglong_app/main.dart';
 import 'package:qinglong_app/module/config/config_bean.dart';
 import 'package:qinglong_app/module/env/env_bean.dart';

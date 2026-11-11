@@ -38,7 +38,7 @@ class _EnvDetailPageState extends ConsumerState<EnvDetailPage> {
     });
 
     await ref
-        .read(SingleAccountPageState.ofEnvProvider(context)(getProviderName(context)))
+        .read(SingleAccountPageState.ofEnvProvider(context)(getProviderName(context)).notifier)
         .enableEnv(context, [currentEnv.sId!], newStatus == 0 ? 1 : 0);
   }
 
@@ -98,7 +98,7 @@ class _EnvDetailPageState extends ConsumerState<EnvDetailPage> {
             onPressed: () async {
               Navigator.of(ctx).pop();
               await ref
-                  .read(SingleAccountPageState.ofEnvProvider(context)(getProviderName(context)))
+                  .read(SingleAccountPageState.ofEnvProvider(context)(getProviderName(context)).notifier)
                   .delEnv(context, currentEnv.sId!);
               if (mounted) Navigator.of(context).pop();
             },
