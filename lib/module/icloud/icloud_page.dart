@@ -313,7 +313,7 @@ class _IcloudPageState extends ConsumerState<IcloudPage>
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              "每 ${SpUtil.getInt(spLocalBackUpFileExperiedTime, defValue: getDefaultLogExperiedTime())} 天自动清理超出范围的备份",
+                              "每 ${SpUtil.getInt(spLocalBackUpFileExperiedTime, defValue: 3)} 天自动清理超出范围的备份",
                               style: TextStyle(fontSize: 12, color: descColor),
                             ),
                           ],
@@ -503,9 +503,7 @@ class _IcloudPageState extends ConsumerState<IcloudPage>
 
   void _delDuration() {
     TextEditingController controller = TextEditingController(
-      text: SpUtil.getInt(spLocalBackUpFileExperiedTime,
-              defValue: getDefaultLogExperiedTime())
-          .toString(),
+      text: SpUtil.getInt(spLocalBackUpFileExperiedTime, defValue: 3).toString(),
     );
     showCupertinoDialog(
       useRootNavigator: false,

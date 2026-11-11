@@ -42,6 +42,15 @@ class _ScriptEditPageState extends ConsumerState<ScriptEditPage> {
   int _searchMatchCount = 0;
   int _searchCurrentIndex = -1;
 
+  String getLanguageType(String title) {
+    if (title.endsWith(".js") || title.endsWith(".ts")) return 'javascript';
+    if (title.endsWith(".sh")) return 'shell';
+    if (title.endsWith(".py")) return 'python';
+    if (title.endsWith(".json")) return 'shell';
+    if (title.endsWith(".yaml")) return 'yaml';
+    return "shell";
+  }
+
   @override
   void dispose() {
     _searchQueryController.dispose();

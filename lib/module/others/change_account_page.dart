@@ -51,7 +51,7 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
     }
 
     final currentIndex =
-        context.findAncestorStateOfType<MultiAccountPageState>()?.currentIndex ??
+        context.findAncestorStateOfType<MultiAccountPageState>()?.index ??
             0;
 
     return Scaffold(

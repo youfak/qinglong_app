@@ -13,6 +13,7 @@ import 'package:qinglong_app/main.dart';
 import 'package:qinglong_app/module/config/add_config_page.dart';
 import 'package:qinglong_app/module/config/config_bean.dart';
 import 'package:qinglong_app/utils/extension.dart';
+import 'package:qinglong_app/utils/utils.dart';
 
 import '../home/home_page.dart';
 import 'config_viewmodel.dart';

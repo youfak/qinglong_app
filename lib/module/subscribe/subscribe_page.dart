@@ -566,9 +566,10 @@ class SubscribeItemCard extends StatelessWidget {
   void logCron(BuildContext context, WidgetRef ref) {
     Navigator.of(context).push(
       CupertinoPageRoute(
-        builder: (context) => IntimeSubscribeLogPage(
-          name: bean["name"],
-          id: bean["id"].toString(),
+        builder: (context) => InTimeSubscribeLogPage(
+          bean["id"],
+          false,
+          bean["name"] ?? "",
         ),
       ),
     );
@@ -578,7 +579,7 @@ class SubscribeItemCard extends StatelessWidget {
     ref
         .read(SingleAccountPageState.ofSubscribeProvider(context)(
             getProviderName(context)))
-        .enableSubscribes(context, [bean["id"]], status == 1 ? 0 : 1);
+        .enableSubscribe(context, bean["id"], status == 1 ? 0 : 1);
   }
 
   void _delSubscribe(BuildContext context, WidgetRef ref) {
@@ -601,7 +602,7 @@ class SubscribeItemCard extends StatelessWidget {
               ref
                   .read(SingleAccountPageState.ofSubscribeProvider(context)(
                       getProviderName(context)))
-                  .delSubscribes(context, [bean["id"]]);
+                  .delSubscribe(context, bean["id"]);
             },
           ),
         ],
