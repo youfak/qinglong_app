@@ -27,10 +27,14 @@ class _AddAppKeyPageState extends ConsumerState<AddAppKeyPage> {
   final List<String> _allPermissions = [
     "定时任务",
     "环境变量",
+    "订阅管理",
     "配置文件",
     "脚本管理",
     "任务日志",
     "依赖管理",
+    "应用授权",
+    "总览看板",
+    "登录日志",
     "系统信息",
   ];
 

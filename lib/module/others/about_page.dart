@@ -4,16 +4,14 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:launch_review/launch_review.dart';
-import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
-import 'package:qinglong_app/base/sp_const.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/qlvisible.dart';
 import 'package:qinglong_app/module/home/system_bean.dart';
 import 'package:qinglong_app/utils/extension.dart';
-import 'package:qinglong_app/utils/sp_utils.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -26,7 +24,8 @@ class AboutPage extends ConsumerStatefulWidget {
   ConsumerState createState() => _AboutPageState();
 }
 
-class _AboutPageState extends ConsumerState<AboutPage> with LazyLoadState<AboutPage> {
+class _AboutPageState extends ConsumerState<AboutPage>
+    with LazyLoadState<AboutPage> {
   String desc = "";
   String versionCode = "";
 
@@ -41,450 +40,344 @@ class _AboutPageState extends ConsumerState<AboutPage> with LazyLoadState<AboutP
     SystemBean? systemBean;
 
     try {
-      systemBean = getIt<SystemBean>(instanceName: (SingleAccountPageState.of(context)?.index ?? 0).toString());
+      systemBean = getIt<SystemBean>(
+        instanceName:
+            (SingleAccountPageState.of(context)?.index ?? 0).toString(),
+      );
     } catch (e) {
       systemBean = SystemBean(version: "2.10.13", fromAutoGet: false);
     }
+
+    final theme = ref.watch(themeProvider);
+    final isDark = theme.isDark();
+    final primaryColor = theme.primaryColor;
+    final cardBg = theme.themeColor.settingBgColor();
+    final titleColor = theme.themeColor.titleColor();
+    final descColor = theme.themeColor.descColor();
+    final borderColor = isDark
+        ? Colors.white.withOpacity(0.08)
+        : Colors.black.withOpacity(0.06);
+
     return Scaffold(
-      backgroundColor: ref.watch(themeProvider).themeColor.bg2Color(),
+      backgroundColor: theme.themeColor.bg2Color(),
       appBar: QlAppBar(
         canBack: true,
         title: "关于软件",
       ),
-      body: SingleChildScrollView(
-        child: SizedBox(
-          width: MediaQuery.of(context).size.width,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+      body: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+        children: [
+          // 1. 顶部 Hero Logo 与版本信息
+          Center(
+            child: Column(
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: primaryColor.withOpacity(0.2),
+                        blurRadius: 16,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: Image.asset(
+                      "assets/images/ql.png",
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  "青龙移动客户端",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: titleColor,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: primaryColor.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    desc.isNotEmpty ? "v$desc (Build $versionCode)" : "v2.0.0",
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: primaryColor,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  "基于青龙开源项目打造的现代化 ${getPlatformName()} 极客工作台",
+                  style: TextStyle(
+                    color: descColor,
+                    fontSize: 12.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 28),
+
+          // 2. 版本与服务端状态
+          _buildSectionTitle("版本与服务", primaryColor, descColor),
+          const SizedBox(height: 8),
+          _buildCardGroup(
+            cardBg: cardBg,
+            borderColor: borderColor,
             children: [
-              SizedBox(
-                height: MediaQuery.of(context).size.height / 25,
-              ),
-              Center(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: Image.asset(
-                    "assets/images/ql.png",
-                    height: 60,
-                  ),
-                ),
-              ),
-              const SizedBox(
-                height: 15,
-              ),
-              Center(
-                child: Text(
-                  "青龙客户端",
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: ref.watch(themeProvider).themeColor.titleColor(),
-                    fontSize: 16,
-                  ),
-                ),
-              ),
-              const SizedBox(
-                height: 5,
-              ),
-              Center(
-                child: Text(
-                  "基于青龙开源项目打造的第三方${getPlatformName()}客户端",
-                  style: TextStyle(
-                    color: ref.watch(themeProvider).themeColor.descColor(),
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-              const SizedBox(
-                height: 30,
-              ),
-              Container(
-                margin: const EdgeInsets.symmetric(
-                  horizontal: 15,
-                ),
-                decoration: BoxDecoration(
-                  color: ref.watch(themeProvider).themeColor.settingBordorColor(),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Column(
+              _buildTile(
+                icon: CupertinoIcons.sparkles,
+                iconColor: const Color(0xff10B981),
+                title: "青龙服务端版本",
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.only(
-                        left: 15,
-                        right: 15,
-                        top: 10,
-                        bottom: 10,
-                      ),
-                      child: Row(
-                        children: [
-                          Text(
-                            "版本",
-                            style: TextStyle(
-                              color: ref.watch(themeProvider).themeColor.titleColor(),
-                              fontSize: 16,
-                            ),
-                          ),
-                          const Spacer(),
-                          Text(
-                            "$desc ($versionCode)",
-                            style: TextStyle(
-                              color: ref.watch(themeProvider).themeColor.descColor(),
-                              fontSize: 16,
-                            ),
-                          ),
-                        ],
+                    Text(
+                      "v${systemBean.version}",
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: descColor,
+                        fontFamily: 'monospace',
                       ),
                     ),
-                    const Divider(
-                      indent: 15,
-                      height: 1,
-                    ),
-                    Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        borderRadius: const BorderRadius.only(
-                          bottomLeft: Radius.circular(10),
-                          bottomRight: Radius.circular(10),
-                        ),
-                        onTap: () {
-                          _checkUpdate();
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.only(
-                            left: 15,
-                            right: 15,
-                            bottom: 10,
-                            top: 10,
-                          ),
-                          child: Row(
-                            children: [
-                              Text(
-                                "青龙服务端",
-                                style: TextStyle(
-                                  color: ref.watch(themeProvider).themeColor.titleColor(),
-                                  fontSize: 16,
-                                ),
-                              ),
-                              const Spacer(),
-                              Text(
-                                "${systemBean.version}",
-                                style: TextStyle(
-                                  color: ref.watch(themeProvider).themeColor.descColor(),
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      CupertinoIcons.chevron_right,
+                      size: 14,
+                      color: descColor.withOpacity(0.5),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(
-                height: 30,
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 30,
-                ),
-                child: Text(
-                  "反馈",
-                  style: TextStyle(
-                    color: ref.watch(themeProvider).themeColor.descColor(),
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              Container(
-                margin: const EdgeInsets.symmetric(
-                  horizontal: 15,
-                ),
-                decoration: BoxDecoration(
-                  color: ref.watch(themeProvider).themeColor.settingBordorColor(),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Column(
-                  children: [
-                    QlVisible(
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(10),
-                            topRight: Radius.circular(10),
-                          ),
-                          onTap: () async {
-                            LaunchReview.launch(writeReview: false, iOSAppId: "1625871665");
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 10,
-                              horizontal: 15,
-                            ),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  CupertinoIcons.heart,
-                                  color: ref.watch(themeProvider).primaryColor,
-                                  size: 20,
-                                ),
-                                const SizedBox(
-                                  width: 15,
-                                ),
-                                Text(
-                                  "在 App Store 评分",
-                                  style: TextStyle(
-                                    color: ref.watch(themeProvider).themeColor.titleColor(),
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                const Spacer(),
-                                Icon(
-                                  CupertinoIcons.right_chevron,
-                                  size: 16,
-                                  color: ref.watch(themeProvider).themeColor.descColor(),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      childReplace: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(10),
-                            topRight: Radius.circular(10),
-                          ),
-                          onTap: () async {
-                            try {
-                              await launchUrl(Uri.tryParse("https://t.me/qinglongapp")!);
-                            } catch (e) {
-                              logger.e(e);
-                            }
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 10,
-                              horizontal: 15,
-                            ),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  CupertinoIcons.cloud_download,
-                                  color: ref.watch(themeProvider).primaryColor,
-                                  size: 20,
-                                ),
-                                const SizedBox(
-                                  width: 15,
-                                ),
-                                Text(
-                                  "下载地址",
-                                  style: TextStyle(
-                                    color: ref.watch(themeProvider).themeColor.titleColor(),
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                const Spacer(),
-                                const SizedBox(
-                                  width: 5,
-                                ),
-                                Icon(
-                                  CupertinoIcons.right_chevron,
-                                  size: 16,
-                                  color: ref.watch(themeProvider).themeColor.descColor(),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const Divider(
-                      indent: 50,
-                      height: 1,
-                    ),
-                    Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () {
-                          _launchURL("https://newtab.work/PrivacyPolicy.html");
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 10,
-                            horizontal: 15,
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                CupertinoIcons.shield,
-                                color: ref.watch(themeProvider).primaryColor,
-                                size: 20,
-                              ),
-                              const SizedBox(
-                                width: 15,
-                              ),
-                              Text(
-                                "用户协议",
-                                style: TextStyle(
-                                  color: ref.watch(themeProvider).themeColor.titleColor(),
-                                  fontSize: 16,
-                                ),
-                              ),
-                              const Spacer(),
-                              Icon(
-                                CupertinoIcons.right_chevron,
-                                size: 16,
-                                color: ref.watch(themeProvider).themeColor.descColor(),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    const Divider(
-                      indent: 50,
-                      height: 1,
-                    ),
-                    Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () {
-                          _launchURL("https://t.me/qinglongapp");
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 10,
-                            horizontal: 15,
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                CupertinoIcons.paperplane,
-                                color: ref.watch(themeProvider).primaryColor,
-                                size: 20,
-                              ),
-                              const SizedBox(
-                                width: 15,
-                              ),
-                              Text(
-                                "App更新通知",
-                                style: TextStyle(
-                                  color: ref.watch(themeProvider).themeColor.titleColor(),
-                                  fontSize: 16,
-                                ),
-                              ),
-                              const Spacer(),
-                              Icon(
-                                CupertinoIcons.right_chevron,
-                                size: 16,
-                                color: ref.watch(themeProvider).themeColor.descColor(),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    const Divider(
-                      indent: 50,
-                      height: 1,
-                    ),
-                    Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        borderRadius: const BorderRadius.only(
-                          bottomLeft: Radius.circular(10),
-                          bottomRight: Radius.circular(10),
-                        ),
-                        onTap: () {
-                          if (Platform.isAndroid) {
-                            Share.share("分享一款好用的青龙客户端，快去点击下面的链接地址下载吧 https://t.me/qinglongapp");
-                          } else {
-                            Share.share("分享一款好用的青龙客户端，快去美区 AppStore 搜索『青龙客户端』或者点击下面的链接地址下载吧 https://apps.apple.com/us/app/id1625871665");
-                          }
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 10,
-                            horizontal: 15,
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                CupertinoIcons.share,
-                                color: ref.watch(themeProvider).primaryColor,
-                                size: 20,
-                              ),
-                              const SizedBox(
-                                width: 15,
-                              ),
-                              Text(
-                                "分享App",
-                                style: TextStyle(
-                                  color: ref.watch(themeProvider).themeColor.titleColor(),
-                                  fontSize: 16,
-                                ),
-                              ),
-                              const Spacer(),
-                              Icon(
-                                CupertinoIcons.right_chevron,
-                                size: 16,
-                                color: ref.watch(themeProvider).themeColor.descColor(),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(
-                height: 30,
-              ),
-              Center(
-                child: Text(
-                  "APP不会收集任何关于您的信息,使用前请仔细阅读用户协议",
-                  style: TextStyle(
-                    color: ref.watch(themeProvider).themeColor.descColor(),
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-              const SizedBox(
-                height: 15,
+                titleColor: titleColor,
+                onTap: _checkUpdate,
               ),
             ],
           ),
+          const SizedBox(height: 20),
+
+          // 3. 互动与支持
+          _buildSectionTitle("互联与支持", primaryColor, descColor),
+          const SizedBox(height: 8),
+          _buildCardGroup(
+            cardBg: cardBg,
+            borderColor: borderColor,
+            children: [
+              QlVisible(
+                child: _buildTile(
+                  icon: CupertinoIcons.heart_fill,
+                  iconColor: const Color(0xffEC4899),
+                  title: "在 App Store 给予五星好评",
+                  titleColor: titleColor,
+                  onTap: () {
+                    LaunchReview.launch(
+                        writeReview: false, iOSAppId: "1625871665");
+                  },
+                ),
+                childReplace: _buildTile(
+                  icon: CupertinoIcons.cloud_download_fill,
+                  iconColor: const Color(0xff06B6D4),
+                  title: "最新 APK 下载与发布频道",
+                  titleColor: titleColor,
+                  onTap: () => _launchURL("https://t.me/qinglongapp"),
+                ),
+              ),
+              _buildDivider(borderColor),
+              _buildTile(
+                icon: CupertinoIcons.paperplane_fill,
+                iconColor: const Color(0xff3B82F6),
+                title: "官方更新通知频道 (Telegram)",
+                titleColor: titleColor,
+                onTap: () => _launchURL("https://t.me/qinglongapp"),
+              ),
+              _buildDivider(borderColor),
+              _buildTile(
+                icon: CupertinoIcons.share,
+                iconColor: const Color(0xff8B5CF6),
+                title: "分享客户端给好友",
+                titleColor: titleColor,
+                onTap: () {
+                  if (Platform.isAndroid) {
+                    Share.share(
+                        "分享一款好用的青龙客户端，快去下载体验吧：https://t.me/qinglongapp");
+                  } else {
+                    Share.share(
+                        "分享一款好用的青龙客户端：https://apps.apple.com/us/app/id1625871665");
+                  }
+                },
+              ),
+              _buildDivider(borderColor),
+              _buildTile(
+                icon: CupertinoIcons.shield_lefthalf_fill,
+                iconColor: const Color(0xffF59E0B),
+                title: "用户协议与隐私保护",
+                titleColor: titleColor,
+                onTap: () =>
+                    _launchURL("https://newtab.work/PrivacyPolicy.html"),
+              ),
+            ],
+          ),
+          const SizedBox(height: 36),
+
+          // 底部声明
+          Center(
+            child: Column(
+              children: [
+                Text(
+                  "所有凭证与配置均安全保存在本地，不上传任何第三方服务器",
+                  style: TextStyle(
+                    color: descColor.withOpacity(0.7),
+                    fontSize: 11.5,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  "QingLong Mobile · Designed with Material 3",
+                  style: TextStyle(
+                    color: descColor.withOpacity(0.4),
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title, Color primaryColor, Color descColor) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.bold,
+          color: descColor,
+          letterSpacing: 0.3,
         ),
       ),
     );
   }
 
-  void _launchURL(String _url) async {
+  Widget _buildCardGroup({
+    required Color cardBg,
+    required Color borderColor,
+    required List<Widget> children,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: children,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTile({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required Color titleColor,
+    Widget? trailing,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
+          children: [
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                icon,
+                size: 18,
+                color: iconColor,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: titleColor,
+                ),
+              ),
+            ),
+            trailing ??
+                Icon(
+                  CupertinoIcons.chevron_right,
+                  size: 15,
+                  color: Colors.grey.withOpacity(0.5),
+                ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDivider(Color borderColor) {
+    return Divider(
+      height: 1,
+      thickness: 0.5,
+      indent: 58,
+      endIndent: 14,
+      color: borderColor,
+    );
+  }
+
+  void _launchURL(String urlStr) async {
     try {
-      await launchUrl(Uri.tryParse(_url.trimLeft())!);
+      await launchUrl(Uri.tryParse(urlStr.trim())!);
     } catch (e) {
       logger.e(e);
     }
   }
 
   void getInfo() async {
-    PackageInfo packageInfo = await PackageInfo.fromPlatform();
-
-    String version = packageInfo.version;
-    versionCode = packageInfo.buildNumber;
-    desc = version;
-    setState(() {});
+    try {
+      PackageInfo packageInfo = await PackageInfo.fromPlatform();
+      desc = packageInfo.version;
+      versionCode = packageInfo.buildNumber;
+      if (mounted) setState(() {});
+    } catch (_) {}
   }
 
   @override
@@ -500,10 +393,7 @@ class _AboutPageState extends ConsumerState<AboutPage> with LazyLoadState<AboutP
           builder: (childContext) => CupertinoAlertDialog(
             title: Text("青龙服务端发现新版本 ${response.bean?.lastVersion}"),
             content: Padding(
-              padding: const EdgeInsets.only(
-                left: 5,
-                top: 5,
-              ),
+              padding: const EdgeInsets.only(left: 5, top: 8),
               child: Text(
                 "${response.bean?.lastLog}",
                 textAlign: TextAlign.left,
@@ -511,26 +401,20 @@ class _AboutPageState extends ConsumerState<AboutPage> with LazyLoadState<AboutP
             ),
             actions: [
               CupertinoDialogAction(
-                child: const Text(
-                  "知道了",
-                ),
-                onPressed: () {
-                  Navigator.of(childContext).pop();
-                },
+                child: const Text("知道了"),
+                onPressed: () => Navigator.of(childContext).pop(),
               ),
             ],
           ),
         );
       } else {
-        "已经是新版本".toast();
+        "当前青龙服务端已经是最新版本".toast();
       }
     }
   }
 }
 
 String getPlatformName() {
-  if (Platform.isAndroid) {
-    return "Android";
-  }
+  if (Platform.isAndroid) return "Android";
   return "iOS";
 }

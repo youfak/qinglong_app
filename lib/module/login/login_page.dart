@@ -80,6 +80,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark || ref.watch(themeProvider).isDark();
     return Scaffold(
       resizeToAvoidBottomInset: false,
       body: AnnotatedRegion<SystemUiOverlayStyle>(
@@ -478,6 +479,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             child: Material(
                               color: Colors.transparent,
                               child: PopupMenuButton<UserInfoBean>(
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                elevation: 6,
+                                color: isDark ? const Color(0xFF1E2638) : Colors.white,
                                 onSelected: (UserInfoBean result) {
                                   selected(result);
                                 },

@@ -142,16 +142,62 @@ class _TreeNodeState extends ConsumerState<TreeNode> with SingleTickerProviderSt
     assert(_treeView != null, 'TreeView must exist in context');
     TreeViewTheme _theme = _treeView!.theme;
     bool isSelected = _treeView.controller.selectedKey != null && _treeView.controller.selectedKey == widget.node.key;
+    if (widget.node.isParent) {
+      return Container(
+        alignment: Alignment.center,
+        width: _theme.iconTheme.size! + _theme.iconPadding,
+        child: Icon(
+          widget.node.expanded ? Icons.folder_open_rounded : Icons.folder_rounded,
+          size: 20,
+          color: isSelected ? ref.watch(themeProvider).primaryColor : const Color(0xFFF59E0B),
+        ),
+      );
+    }
+
+    final ext = widget.node.title.contains('.') ? widget.node.title.split('.').last.toLowerCase() : '';
+    IconData fileIcon;
+    Color iconColor;
+
+    switch (ext) {
+      case 'js':
+      case 'jsx':
+      case 'ts':
+      case 'tsx':
+        fileIcon = Icons.javascript_rounded;
+        iconColor = const Color(0xFFEAB308);
+        break;
+      case 'py':
+        fileIcon = Icons.terminal_rounded;
+        iconColor = const Color(0xFF3B82F6);
+        break;
+      case 'sh':
+      case 'bash':
+        fileIcon = Icons.terminal_rounded;
+        iconColor = const Color(0xFF10B981);
+        break;
+      case 'json':
+        fileIcon = Icons.data_object_rounded;
+        iconColor = const Color(0xFFF97316);
+        break;
+      case 'log':
+      case 'txt':
+        fileIcon = Icons.article_outlined;
+        iconColor = const Color(0xFF64748B);
+        break;
+      default:
+        fileIcon = Icons.insert_drive_file_outlined;
+        iconColor = const Color(0xFF94A3B8);
+        break;
+    }
+
     return Container(
       alignment: Alignment.center,
       width: _theme.iconTheme.size! + _theme.iconPadding,
-      child: widget.node.isParent
-          ? Icon(
-              widget.node.expanded ? CupertinoIcons.folder_badge_minus : CupertinoIcons.folder_badge_plus,
-              size: _theme.iconTheme.size,
-              color: isSelected ? ref.watch(themeProvider).primaryColor : ref.watch(themeProvider).themeColor.titleColor(),
-            )
-          : const SizedBox.shrink(),
+      child: Icon(
+        fileIcon,
+        size: 19,
+        color: iconColor,
+      ),
     );
   }
 
@@ -160,9 +206,10 @@ class _TreeNodeState extends ConsumerState<TreeNode> with SingleTickerProviderSt
     assert(_treeView != null, 'TreeView must exist in context');
     TreeViewTheme _theme = _treeView!.theme;
     final icon = _buildNodeIcon();
+    final isParent = widget.node.isParent;
     return Container(
       padding: EdgeInsets.symmetric(
-        vertical: _theme.verticalSpacing ?? (_theme.dense ? 10 : 15),
+        vertical: _theme.verticalSpacing ?? (_theme.dense ? 8 : 12),
         horizontal: 0,
       ),
       child: Row(
@@ -170,22 +217,20 @@ class _TreeNodeState extends ConsumerState<TreeNode> with SingleTickerProviderSt
         crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
           icon,
+          const SizedBox(width: 8),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(
-                vertical: 5,
+                vertical: 2,
               ),
               child: Text(
                 widget.node.title,
-                style: widget.node.isParent
-                    ? TextStyle(
-                        fontSize: 16,
-                        color: ref.watch(themeProvider).themeColor.titleColor(),
-                      )
-                    : TextStyle(
-                        fontSize: 16,
-                        color: ref.watch(themeProvider).themeColor.titleColor(),
-                      ),
+                style: TextStyle(
+                  fontSize: isParent ? 15 : 14,
+                  fontWeight: isParent ? FontWeight.w600 : FontWeight.w400,
+                  fontFamily: isParent ? null : 'monospace',
+                  color: ref.watch(themeProvider).themeColor.titleColor(),
+                ),
               ),
             ),
           ),

@@ -9,6 +9,7 @@ import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
 import 'package:qinglong_app/utils/extension.dart';
+import 'package:qinglong_app/utils/sp_utils.dart';
 
 class PushSettingPage extends ConsumerStatefulWidget {
   const PushSettingPage({Key? key}) : super(key: key);
@@ -708,45 +709,81 @@ class _PushSettingPageState extends ConsumerState<PushSettingPage> {
     }
   }
 
+  String get _cacheKey {
+    final host = SingleAccountPageState.ofUserInfo(context).host ?? "default";
+    return "push_notification_cache_$host";
+  }
+
   void onLazyLoad() async {
-    var response = await SingleAccountPageState.ofApi(context).getNotifcation();
+    Map<String, dynamic>? activeConfig;
 
-    if (response.success) {
-      String result = response.bean ?? "{}";
-      Map<String, dynamic> json = jsonDecode(result);
+    try {
+      var response =
+          await SingleAccountPageState.ofApi(context).getNotifcation();
+      if (response.success && response.bean != null) {
+        String result = response.bean!;
+        dynamic decoded = jsonDecode(result);
+        if (decoded is Map<String, dynamic>) {
+          activeConfig = decoded;
+          // 多层包装穿透
+          if (activeConfig["data"] is Map<String, dynamic>) {
+            activeConfig = activeConfig["data"] as Map<String, dynamic>;
+          } else if (activeConfig["notification"] is Map<String, dynamic>) {
+            activeConfig = activeConfig["notification"] as Map<String, dynamic>;
+          } else if (activeConfig["info"] is Map<String, dynamic>) {
+            activeConfig = activeConfig["info"] as Map<String, dynamic>;
+          }
+        }
+      }
+    } catch (_) {}
 
-      if (json.isEmpty) {
-        current = list.last;
-        setState(() {
-          loading = false;
-        });
-        return;
+    // 本地缓存兜底：若服务端未返回有效配置或解析为空，读取本地缓存
+    if (activeConfig == null ||
+        activeConfig.isEmpty ||
+        activeConfig["type"] == null) {
+      String localCache = SpUtil.getString(_cacheKey, defValue: "");
+      if (localCache.isNotEmpty) {
+        try {
+          dynamic localDecoded = jsonDecode(localCache);
+          if (localDecoded is Map<String, dynamic> &&
+              localDecoded["type"] != null) {
+            activeConfig = localDecoded;
+          }
+        } catch (_) {}
       }
-      String? type = json["type"];
-      if (type == null || type.isEmpty) {
-        current = list.last;
-        setState(() {
-          loading = false;
-        });
-        return;
-      }
+    }
 
-      int index = list.indexWhere((element) => element.key == type);
-      if (index < 0) {
-        setState(() {
-          loading = false;
-        });
-        return;
-      }
+    if (activeConfig != null && activeConfig.isNotEmpty) {
+      String type = activeConfig["type"]?.toString() ?? "";
+      if (type.isNotEmpty && type != "已关闭") {
+        int index = list.indexWhere(
+          (element) => element.key.toLowerCase() == type.toLowerCase(),
+        );
 
-      for (var element in list[index].children) {
-        element.controller.text = json[element.key]?.toString() ?? "";
+        if (index >= 0) {
+          final matchedChannel = list[index];
+          for (var element in matchedChannel.children) {
+            // 尝试精确匹配或大小写不敏感匹配
+            var val = activeConfig[element.key] ??
+                activeConfig[element.key.toLowerCase()];
+            element.controller.text = val?.toString() ?? "";
+          }
+          current = matchedChannel;
+          // 保存至本地缓存
+          SpUtil.putString(_cacheKey, jsonEncode(activeConfig));
+          if (mounted) {
+            setState(() {
+              loading = false;
+            });
+          }
+          return;
+        }
       }
-      current = list[index];
-      setState(() {
-        loading = false;
-      });
-    } else {
+    }
+
+    // 默认回退为已关闭
+    current = list.isNotEmpty ? list.last : null;
+    if (mounted) {
       setState(() {
         loading = false;
       });
@@ -760,6 +797,7 @@ class _PushSettingPageState extends ConsumerState<PushSettingPage> {
           await SingleAccountPageState.ofApi(context).updateNotifcation({});
       EasyLoading.dismiss();
       if (response.success) {
+        SpUtil.remove(_cacheKey);
         "通知已关闭".toast();
         Navigator.of(context).pop();
       } else {
@@ -781,10 +819,12 @@ class _PushSettingPageState extends ConsumerState<PushSettingPage> {
     Map<String, dynamic> params = {};
     params["type"] = current!.key.toString();
     params.addAll(current!.children2Json());
+
     var response =
         await SingleAccountPageState.ofApi(context).updateNotifcation(params);
     EasyLoading.dismiss();
     if (response.success) {
+      SpUtil.putString(_cacheKey, jsonEncode(params));
       "通知设置保存成功".toast();
       Navigator.of(context).pop();
     } else {

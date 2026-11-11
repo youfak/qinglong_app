@@ -83,6 +83,7 @@ class _AddSubscribePageState extends ConsumerState<AddSubscribePage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark || ref.watch(themeProvider).isDark();
     return Scaffold(
       appBar: QlAppBar(
         canBack: true,
@@ -343,6 +344,9 @@ class _AddSubscribePageState extends ConsumerState<AddSubscribePage> {
                           width: 15,
                         ),
                         PopupMenuButton<String>(
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          elevation: 6,
+                          color: isDark ? const Color(0xFF1E2638) : Colors.white,
                           onSelected: (String result) {
                             intervalUnit = result;
                             setState(() {});

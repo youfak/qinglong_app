@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
@@ -14,16 +15,16 @@ import 'impl.dart';
 
 class CodeMirrorView extends CodeMirrorViewImpl {
   final CodeMirrorOptions options;
-
   final ValueChanged<EditorController> onCreate;
-
   final Function(String val) onValue;
+  final void Function(int count, int index)? onSearchResult;
 
   const CodeMirrorView({
     Key? key,
     required this.options,
     required this.onCreate,
     required this.onValue,
+    this.onSearchResult,
   }) : super(key: key);
 
   @override
@@ -154,6 +155,21 @@ class CodeMirrorViewState extends CodeMirrorViewImplState<CodeMirrorView> {
                           'editor.refresh()',
                         );
                       },
+                      doSearch: (query) {
+                        final escaped = Uri.encodeComponent(query);
+                        _controller?.runJavascript(
+                          'window.doSearch(decodeURIComponent("$escaped"))',
+                        );
+                      },
+                      searchNext: () {
+                        _controller?.runJavascript('window.searchNext()');
+                      },
+                      searchPrev: () {
+                        _controller?.runJavascript('window.searchPrev()');
+                      },
+                      clearSearch: () {
+                        _controller?.runJavascript('window.clearSearch()');
+                      },
                     ));
                   },
                   javascriptMode: JavascriptMode.unrestricted,
@@ -161,6 +177,17 @@ class CodeMirrorViewState extends CodeMirrorViewImplState<CodeMirrorView> {
                     JavascriptChannel(
                       name: 'MessageInvoker',
                       onMessageReceived: (event) => widget.onValue(event.message),
+                    ),
+                    JavascriptChannel(
+                      name: 'SearchChannel',
+                      onMessageReceived: (event) {
+                        try {
+                          final data = jsonDecode(event.message);
+                          final count = data['count'] as int? ?? 0;
+                          final index = data['index'] as int? ?? -1;
+                          widget.onSearchResult?.call(count, index);
+                        } catch (_) {}
+                      },
                     ),
                   },
                 );

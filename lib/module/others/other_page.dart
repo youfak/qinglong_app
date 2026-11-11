@@ -784,121 +784,258 @@ class OtherPageState extends ConsumerState<OtherPage>
   }
 
   void _delLog(BuildContext context) async {
-    var response = await SingleAccountPageState.ofApi(context).logDel();
-    String day = "";
+    EasyLoading.show(status: "获取配置中...");
+    String day = "7";
 
-    if (response.success) {
-      if (response.bean != null && response.bean?.frequency != null) {
-        day = response.bean!.frequency!.toString();
-      } else {
-        day = response.bean?.info?.frequency.toString() ?? "";
+    try {
+      var response = await SingleAccountPageState.ofApi(context)
+          .logDel()
+          .timeout(const Duration(seconds: 5));
+      if (response.success && response.bean != null) {
+        if (response.bean?.frequency != null) {
+          day = response.bean!.frequency!.toString();
+        } else if (response.bean?.info?.frequency != null) {
+          day = response.bean!.info!.frequency.toString();
+        }
       }
+    } catch (_) {} finally {
+      EasyLoading.dismiss();
     }
 
+    final theme = ref.read(themeProvider);
+    final isDark = theme.isDark();
+    final primaryColor = theme.primaryColor;
+    final cardBg = theme.themeColor.settingBgColor();
+    final titleColor = theme.themeColor.titleColor();
+    final descColor = theme.themeColor.descColor();
+
     TextEditingController controller = TextEditingController(text: day);
-    showCupertinoDialog(
-      useRootNavigator: false,
+
+    showModalBottomSheet(
       context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: const Text(
-          "日志删除频率:",
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w400,
-          ),
-        ),
-        content: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                vertical: 10,
+      isScrollControlled: true,
+      backgroundColor: cardBg,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 16,
+                bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
               ),
-              child: Row(
+              child: Column(
                 mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("每"),
-                  const SizedBox(
-                    width: 10,
-                  ),
-                  SizedBox(
-                    width: MediaQuery.of(context).size.width / 3,
-                    child: TextField(
-                      textAlign: TextAlign.center,
-                      controller: controller,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        hintText: "",
-                        border: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: ref
-                                .watch(themeProvider)
-                                .themeColor
-                                .title2Color(),
-                            width: 1,
-                          ),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: ref
-                                .watch(themeProvider)
-                                .themeColor
-                                .title2Color(),
-                            width: 1,
-                          ),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(2),
                       ),
-                      autofocus: false,
                     ),
                   ),
-                  const SizedBox(
-                    width: 10,
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: const Color(0xff14B8A6).withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          CupertinoIcons.trash_circle_fill,
+                          color: Color(0xff14B8A6),
+                          size: 22,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "自动清理日志设置",
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.bold,
+                                color: titleColor,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              "按设定的周期自动清除历史执行日志",
+                              style: TextStyle(fontSize: 12, color: descColor),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  const Text("天"),
+                  const SizedBox(height: 18),
+                  Text(
+                    "常用清理周期",
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: descColor,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      {"label": "3 天", "val": "3"},
+                      {"label": "7 天 (推荐)", "val": "7"},
+                      {"label": "15 天", "val": "15"},
+                      {"label": "30 天", "val": "30"},
+                      {"label": "不清理 (留空)", "val": ""},
+                    ].map((item) {
+                      final isSelected = controller.text == item["val"];
+                      return InkWell(
+                        borderRadius: BorderRadius.circular(8),
+                        onTap: () {
+                          setModalState(() {
+                            controller.text = item["val"]!;
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? primaryColor.withOpacity(0.15)
+                                : (isDark
+                                    ? Colors.white.withOpacity(0.04)
+                                    : Colors.black.withOpacity(0.03)),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: isSelected
+                                  ? primaryColor
+                                  : Colors.grey.withOpacity(0.15),
+                            ),
+                          ),
+                          child: Text(
+                            item["label"]!,
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                              color: isSelected ? primaryColor : titleColor,
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 18),
+                  Text(
+                    "自定义清理频率 (天)",
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: descColor,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: controller,
+                    keyboardType: TextInputType.number,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: titleColor,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: "留空或填 0 表示不自动清理",
+                      hintStyle: TextStyle(
+                        fontSize: 13,
+                        color: descColor.withOpacity(0.5),
+                        fontWeight: FontWeight.normal,
+                      ),
+                      prefixIcon: const Icon(
+                        CupertinoIcons.calendar,
+                        size: 18,
+                      ),
+                      suffixText: "天",
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onChanged: (_) => setModalState(() {}),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 13),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: () => Navigator.of(ctx).pop(),
+                          child: const Text("取消"),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: primaryColor,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 13),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 0,
+                          ),
+                          onPressed: () {
+                            Navigator.of(ctx).pop();
+                            final val = int.tryParse(controller.text.trim()) ?? 0;
+                            commitLogDel(val);
+                          },
+                          child: const Text(
+                            "保存设置",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
-            ),
-          ],
-        ),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text(
-              "取消",
-              style: TextStyle(
-                color: Color(0xff999999),
-              ),
-            ),
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-          ),
-          CupertinoDialogAction(
-            child: Text(
-              "确定",
-              style: TextStyle(
-                color: ref.watch(themeProvider).primaryColor,
-              ),
-            ),
-            onPressed: () async {
-              Navigator.of(context).pop();
-              commitLogDel(
-                int.tryParse(controller.text) ?? 1000,
-              );
-            },
-          ),
-        ],
-      ),
+            );
+          },
+        );
+      },
     );
   }
 
   void commitLogDel(int time) async {
+    EasyLoading.show(status: "保存中...");
     var response = await SingleAccountPageState.ofApi(context).logDelTime(time);
+    EasyLoading.dismiss();
     if (response.success) {
-      "修改成功".toast();
+      "清理频率更新成功".toast();
     } else {
       response.message.toast();
     }

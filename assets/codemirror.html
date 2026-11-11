@@ -3,39 +3,39 @@
 <head>
     <meta charset="UTF-8"/>
     <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
-    <meta name="viewport" content="width=device-width, user-scalable=no"/>
-    <link
-            rel="stylesheet"
-            href="https://unpkg.com/codemirror@VERSION/lib/codemirror.css"
-    />
-    <link
-            rel="stylesheet"
-            href="https://unpkg.com/codemirror@VERSION/theme/EDITOR_THEME.css"
-    />
-    <link
-            rel="stylesheet"
-            href="https://unpkg.com/codemirror@VERSION/addon/dialog/dialog.css"
-    />
-    <link
-            rel="stylesheet"
-            href="https://unpkg.com/codemirror@VERSION/addon/fold/foldgutter.css"
-    />
-    <title>Editor</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0"/>
+    <link rel="stylesheet" href="https://unpkg.com/codemirror@VERSION/lib/codemirror.css"/>
+    <link rel="stylesheet" href="https://unpkg.com/codemirror@VERSION/theme/EDITOR_THEME.css"/>
+    <link rel="stylesheet" href="https://unpkg.com/codemirror@VERSION/addon/dialog/dialog.css"/>
+    <link rel="stylesheet" href="https://unpkg.com/codemirror@VERSION/addon/fold/foldgutter.css"/>
+    <title>QingLong Editor</title>
     <style>
-
-      body {
-        margin: 0px;
-        padding: 0px;
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
       }
       #content {
         width: 100%;
         height: 100%;
         display: block;
       }
-      .CodeMirror {float: left; width: 100%; height: 100%; }
-
-
-
+      .CodeMirror {
+        width: 100%;
+        height: 100%;
+        font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+        font-size: 13.5px;
+        line-height: 1.5;
+      }
+      .cm-searching {
+        background-color: rgba(16, 185, 129, 0.4) !important;
+        border-radius: 2px;
+      }
+      .CodeMirror-selected {
+        background-color: rgba(16, 185, 129, 0.25) !important;
+      }
     </style>
 </head>
 <body>
@@ -65,27 +65,97 @@
         lineWrapping: true,
         styleActiveLine: true,
         matchBrackets: true,
-        foldGutter: 'EDITOR_MODE' == 'shell'?{}:{
-                rangeFinder: new CodeMirror.fold.combine(CodeMirror.fold.indent,CodeMirror.fold.comment)
-            },
-        gutters: 'EDITOR_MODE' == 'shell'?[]:["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+        foldGutter: 'EDITOR_MODE' == 'shell' ? {} : {
+          rangeFinder: new CodeMirror.fold.combine(CodeMirror.fold.indent, CodeMirror.fold.comment)
+        },
+        gutters: 'EDITOR_MODE' == 'shell' ? [] : ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
       });
+
       editor.on('copy', (cm, e) => {
         e.codemirrorIgnore = true;
       });
 
       editor.on("change", (event) => {
         const value = event.getValue();
-        MessageInvoker.postMessage(value);
+        if (window.MessageInvoker) {
+          MessageInvoker.postMessage(value);
+        }
       });
       editor.refresh();
-      function searchText(){
+
+      var searchMatches = [];
+      var currentMatchIndex = -1;
+
+      window.doSearch = function(query) {
+        searchMatches = [];
+        currentMatchIndex = -1;
+        editor.execCommand('clearSearch');
+        if (!query || query.length === 0) {
+          if (window.SearchChannel) {
+            SearchChannel.postMessage(JSON.stringify({ count: 0, index: -1 }));
+          }
+          return;
+        }
+        var cursor = editor.getSearchCursor(query, { line: 0, ch: 0 }, { caseFold: true });
+        while (cursor.findNext()) {
+          searchMatches.push({ from: cursor.from(), to: cursor.to() });
+        }
+        if (searchMatches.length > 0) {
+          currentMatchIndex = 0;
+          editor.setSelection(searchMatches[0].from, searchMatches[0].to);
+          editor.scrollIntoView({ from: searchMatches[0].from, to: searchMatches[0].to }, 60);
+        }
+        if (window.SearchChannel) {
+          SearchChannel.postMessage(JSON.stringify({
+            count: searchMatches.length,
+            index: currentMatchIndex
+          }));
+        }
+      };
+
+      window.searchNext = function() {
+        if (searchMatches.length === 0) return;
+        currentMatchIndex = (currentMatchIndex + 1) % searchMatches.length;
+        var match = searchMatches[currentMatchIndex];
+        editor.setSelection(match.from, match.to);
+        editor.scrollIntoView({ from: match.from, to: match.to }, 60);
+        if (window.SearchChannel) {
+          SearchChannel.postMessage(JSON.stringify({
+            count: searchMatches.length,
+            index: currentMatchIndex
+          }));
+        }
+      };
+
+      window.searchPrev = function() {
+        if (searchMatches.length === 0) return;
+        currentMatchIndex = (currentMatchIndex - 1 + searchMatches.length) % searchMatches.length;
+        var match = searchMatches[currentMatchIndex];
+        editor.setSelection(match.from, match.to);
+        editor.scrollIntoView({ from: match.from, to: match.to }, 60);
+        if (window.SearchChannel) {
+          SearchChannel.postMessage(JSON.stringify({
+            count: searchMatches.length,
+            index: currentMatchIndex
+          }));
+        }
+      };
+
+      window.clearSearch = function() {
+        searchMatches = [];
+        currentMatchIndex = -1;
+        editor.execCommand('clearSearch');
+        if (window.SearchChannel) {
+          SearchChannel.postMessage(JSON.stringify({ count: 0, index: -1 }));
+        }
+      };
+
+      function searchText() {
         editor.execCommand('findPersistent');
       }
-      function clearSearchText(){
+      function clearSearchText() {
         editor.execCommand('clearSearch');
       }
-
 </script>
 </body>
 </html>

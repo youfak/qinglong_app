@@ -37,11 +37,19 @@ class EditorController {
     required this.setValue,
     required this.setOptions,
     required this.refresh,
+    this.doSearch,
+    this.searchNext,
+    this.searchPrev,
+    this.clearSearch,
   });
 
   final void Function(String val) setValue;
   final void Function(CodeMirrorOptions val) setOptions;
   final void Function() refresh;
+  final void Function(String query)? doSearch;
+  final void Function()? searchNext;
+  final void Function()? searchPrev;
+  final void Function()? clearSearch;
 }
 
 abstract class CodeMirrorViewImpl extends ConsumerStatefulWidget {

@@ -6,18 +6,20 @@ import 'codemirror/io.dart' if (dart.library.html) 'codemirror/web.dart';
 export 'codemirror/impl.dart';
 
 class Editor extends StatelessWidget {
+  final CodeMirrorOptions options;
+  final ValueChanged<EditorController> onCreate;
+  final void Function(String val) onValue;
+  final Key? codeMirrorKey;
+  final void Function(int count, int index)? onSearchResult;
+
   Editor({
     Key? key,
     required this.onCreate,
     required this.onValue,
     required this.options,
     this.codeMirrorKey,
-  }) : super(key: key) {}
-
-  final CodeMirrorOptions options;
-  final ValueChanged<EditorController> onCreate;
-  final void Function(String val) onValue;
-  final Key? codeMirrorKey;
+    this.onSearchResult,
+  }) : super(key: key);
 
   static List<String> MODES = const <String>[
     "apl",
@@ -225,6 +227,7 @@ class Editor extends StatelessWidget {
       onValue: onValue,
       onCreate: onCreate,
       options: options,
+      onSearchResult: onSearchResult,
     );
   }
 }

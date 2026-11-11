@@ -69,44 +69,36 @@ class AppKeyViewModel extends BaseViewModel {
     }
   }
 
+  static const Map<String, String> scopeMap = {
+    "crons": "定时任务",
+    "envs": "环境变量",
+    "subscriptions": "订阅管理",
+    "configs": "配置文件",
+    "scripts": "脚本管理",
+    "logs": "任务日志",
+    "dependencies": "依赖管理",
+    "system": "系统信息",
+    "apps": "应用授权",
+    "dashboard": "总览看板",
+    "login-log": "登录日志",
+  };
+
   static List<String> getScopeNames(List<dynamic>? scopeKeys) {
-    //"crons","envs","configs","scripts","logs","dependencies","system"
-    //配置文件脚本管理环境变量任务日志
-    Map<String, String> keyMaps = {
-      "crons": "定时任务",
-      "envs": "环境变量",
-      "configs": "配置文件",
-      "scripts": "脚本管理",
-      "logs": "任务日志",
-      "dependencies": "依赖管理",
-      "system": "系统信息",
-    };
-
-    List<String> result = [];
-
     if (scopeKeys == null) return [];
-    result.addAll(scopeKeys.map((e) => keyMaps[e.toString()] ?? "").toList());
-
+    List<String> result = [];
+    for (var key in scopeKeys) {
+      final strKey = key.toString();
+      result.add(scopeMap[strKey] ?? strKey);
+    }
     return result;
   }
 
   static List<String> getScopeKeys(List<String> scopeNames) {
-    //"crons","envs","configs","scripts","logs","dependencies","system"
-    //配置文件脚本管理环境变量任务日志
-    Map<String, String> keyMaps = {
-      "定时任务": "crons",
-      "环境变量": "envs",
-      "配置文件": "configs",
-      "脚本管理": "scripts",
-      "任务日志": "logs",
-      "依赖管理": "dependencies",
-      "系统信息": "system",
-    };
-
+    final reverseMap = scopeMap.map((k, v) => MapEntry(v, k));
     List<String> result = [];
-
-    result.addAll(scopeNames.map((e) => keyMaps[e.toString()] ?? "").toList());
-
+    for (var name in scopeNames) {
+      result.add(reverseMap[name] ?? name);
+    }
     return result;
   }
 }
