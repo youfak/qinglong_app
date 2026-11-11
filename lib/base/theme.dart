@@ -86,6 +86,8 @@ class ThemeViewModel extends ChangeNotifier {
 
   get themeMode => _themeMode;
 
+  bool isDark() => _themeMode == modeDark;
+
   ThemeData getWhiteTheme() {
     return ThemeData.light().copyWith(
       useMaterial3: true,

@@ -265,8 +265,8 @@ class _SettingPageState extends ConsumerState<SettingPage> {
     Color descColor,
     Color primaryColor,
   ) {
-    final host = SingleAccountPageState.ofUserInfo(context).host;
-    final alias = SingleAccountPageState.ofUserInfo(context).alias;
+    final host = SingleAccountPageState.ofUserInfo(context).host ?? "";
+    final alias = SingleAccountPageState.ofUserInfo(context).alias ?? "";
     final isAuto = systemBean?.fromAutoGet ?? false;
 
     return Container(
