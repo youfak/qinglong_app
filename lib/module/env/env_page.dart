@@ -486,6 +486,20 @@ class EnvItemCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = ref.watch(themeProvider);
+    final isDark = theme.isDark();
+    final primaryColor = theme.primaryColor;
+    final cardBg = theme.themeColor.settingBgColor();
+    final titleColor = theme.themeColor.titleColor();
+    final descColor = theme.themeColor.descColor();
+    final borderColor = isDark
+        ? Colors.white.withOpacity(0.08)
+        : Colors.black.withOpacity(0.05);
+
+    final timeStr = bean.updatedAt == null
+        ? Utils.formatGMTTime(bean.timestamp ?? "")
+        : Utils.formatTime2(bean.updatedAt);
+
     return Slidable(
       enabled: !editMode,
       key: ValueKey(bean.sId),
@@ -505,7 +519,10 @@ class EnvItemCell extends StatelessWidget {
                 ),
               )
                   .then((value) {
-                ref.read(SingleAccountPageState.ofEnvProvider(context)(getProviderName(context)).notifier).loadData(context, false);
+                ref
+                    .read(SingleAccountPageState.ofEnvProvider(context)(
+                        getProviderName(context)).notifier)
+                    .loadData(context, false);
               });
             },
             foregroundColor: Colors.white,
@@ -517,7 +534,9 @@ class EnvItemCell extends StatelessWidget {
               enableEnv(context);
             },
             foregroundColor: Colors.white,
-            icon: bean.status == 0 ? Icons.dnd_forwardslash : Icons.check_circle_outline_sharp,
+            icon: bean.status == 1
+                ? Icons.check_circle_outline_sharp
+                : Icons.dnd_forwardslash,
           ),
           SlidableAction(
             backgroundColor: const Color(0xffEA4D3E),
@@ -530,17 +549,30 @@ class EnvItemCell extends StatelessWidget {
         ],
       ),
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: borderColor),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
         child: Material(
-          color: ref.watch(themeProvider).themeColor.settingBgColor(),
-          borderRadius: BorderRadius.circular(12),
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(14),
           clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: () {
               if (editMode) {
                 checkedCallback(bean.sId ?? "");
               } else {
-                Navigator.of(context).pushNamed(Routes.routeEnvDetail, arguments: bean);
+                Navigator.of(context)
+                    .pushNamed(Routes.routeEnvDetail, arguments: bean);
               }
             },
             child: Row(
@@ -548,149 +580,149 @@ class EnvItemCell extends StatelessWidget {
                 AnimatedSize(
                   duration: const Duration(milliseconds: 250),
                   child: SizedBox(
-                    width: editMode ? 40 : 0,
-                    height: 40,
+                    width: editMode ? 44 : 0,
+                    height: 44,
                     child: Visibility(
                       visible: editMode,
-                      child: GestureDetector(
+                      child: Center(
                         child: Icon(
-                          checked ? CupertinoIcons.checkmark_alt_circle : CupertinoIcons.circle,
-                          size: 25,
-                          color: checked ? ref.watch(themeProvider).primaryColor : ref.watch(themeProvider).themeColor.descColor(),
+                          checked
+                              ? CupertinoIcons.checkmark_alt_circle_fill
+                              : CupertinoIcons.circle,
+                          size: 24,
+                          color: checked ? primaryColor : descColor,
                         ),
                       ),
                     ),
                   ),
                 ),
                 Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 15,
-                      vertical: 12,
-                    ),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
                     child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.start,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // 第一行：序号 + 变量名与备注 + 右上角启用/禁用状态
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            Expanded(
-                              child: Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 5,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(4),
-                                      border: Border.all(color: ref.watch(themeProvider).themeColor.descColor().withOpacity(0.5), width: 1),
-                                    ),
-                                    child: Text(
-                                      "${getIndexByIndex(context, index)}",
-                                      style: TextStyle(
-                                        color: ref.watch(themeProvider).themeColor.descColor(),
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(
-                                    width: 8,
-                                  ),
-                                  ConstrainedBox(
-                                    constraints: BoxConstraints.loose(
-                                      Size.fromWidth(
-                                        MediaQuery.of(context).size.width * 0.50,
-                                      ),
-                                    ),
-                                    child: RichText(
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      text: TextSpan(
-                                        text: bean.name ?? "",
-                                        style: TextStyle(
-                                          overflow: TextOverflow.ellipsis,
-                                          color: ref.watch(themeProvider).themeColor.titleColor(),
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                        children: <TextSpan>[
-                                          TextSpan(
-                                            text: (bean.remarks == null || bean.remarks!.isEmpty) ? "" : " (${bean.remarks})",
-                                            style: TextStyle(
-                                              overflow: TextOverflow.ellipsis,
-                                              color: ref.watch(themeProvider).themeColor.descColor(),
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.normal,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(
-                                    width: 8,
-                                  ),
-                                  bean.status == 1
-                                      ? const StatusWidget(
-                                          title: "已禁用",
-                                          color: Color(0xffEF4444),
-                                        )
-                                      : StatusWidget(
-                                          title: "已启用",
-                                          color: ref.watch(themeProvider).primaryColor,
-                                        )
-                                ],
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
                               ),
-                            ),
-                            const SizedBox(
-                              width: 10,
-                            ),
-                            Visibility(
-                              visible: !editMode2,
-                              child: Material(
-                                color: Colors.transparent,
-                                child: Text(
-                                  bean.updatedAt == null ? Utils.formatGMTTime(bean.timestamp ?? "") : Utils.formatTime2(bean.updatedAt),
-                                  maxLines: 1,
-                                  style: TextStyle(
-                                    overflow: TextOverflow.ellipsis,
-                                    color: ref.watch(themeProvider).themeColor.descColor(),
-                                    fontSize: 12,
-                                  ),
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? Colors.white.withOpacity(0.06)
+                                    : Colors.black.withOpacity(0.05),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                "${getIndexByIndex(context, index)}",
+                                style: TextStyle(
+                                  color: descColor,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: RichText(
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                text: TextSpan(
+                                  text: bean.name ?? "",
+                                  style: TextStyle(
+                                    color: titleColor,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  children: [
+                                    if (bean.remarks != null &&
+                                        bean.remarks!.isNotEmpty)
+                                      TextSpan(
+                                        text: " (${bean.remarks})",
+                                        style: TextStyle(
+                                          color: descColor,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.normal,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            bean.status == 1
+                                ? const StatusWidget(
+                                    title: "已禁用",
+                                    color: Color(0xffEF4444),
+                                  )
+                                : StatusWidget(
+                                    title: "已启用",
+                                    color: primaryColor,
+                                  ),
                           ],
                         ),
-                        const SizedBox(
-                          height: 8,
-                        ),
-                        Material(
-                          color: Colors.transparent,
+                        const SizedBox(height: 8),
+
+                        // 第二行：变量值
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? Colors.white.withOpacity(0.04)
+                                : Colors.black.withOpacity(0.03),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                           child: Text(
                             bean.value ?? "",
                             maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              overflow: TextOverflow.ellipsis,
-                              color: ref.watch(themeProvider).themeColor.descColor(),
-                              fontSize: 13,
+                              fontFamily: 'monospace',
+                              color: titleColor.withOpacity(0.85),
+                              fontSize: 12.5,
+                              height: 1.3,
                             ),
                           ),
                         ),
+                        const SizedBox(height: 8),
+
+                        // 第三行（右下角）：时间信息彻底靠右展示，绝不与状态重叠
+                        if (!editMode2 && timeStr.isNotEmpty)
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              Icon(
+                                CupertinoIcons.clock,
+                                size: 12,
+                                color: descColor.withOpacity(0.6),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                timeStr,
+                                style: TextStyle(
+                                  color: descColor.withOpacity(0.7),
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
                       ],
                     ),
                   ),
                 ),
-                Visibility(
-                  visible: editMode2,
-                  child: const IgnorePointer(
+                if (editMode2)
+                  const IgnorePointer(
                     ignoring: true,
                     child: Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 15,
-                      ),
+                      padding: EdgeInsets.symmetric(horizontal: 14),
                       child: Icon(
                         CupertinoIcons.line_horizontal_3,
                         color: Color(0xff999999),
@@ -698,7 +730,6 @@ class EnvItemCell extends StatelessWidget {
                       ),
                     ),
                   ),
-                ),
               ],
             ),
           ),
@@ -708,7 +739,10 @@ class EnvItemCell extends StatelessWidget {
   }
 
   void enableEnv(BuildContext context) {
-    ref.read(SingleAccountPageState.ofEnvProvider(context)(getProviderName(context))).enableEnv(context, [bean.sId!], bean.status!);
+    ref
+        .read(SingleAccountPageState.ofEnvProvider(context)(
+            getProviderName(context)))
+        .enableEnv(context, [bean.sId!], bean.status!);
   }
 
   void delEnv(BuildContext context1, WidgetRef ref) {
@@ -739,7 +773,10 @@ class EnvItemCell extends StatelessWidget {
             ),
             onPressed: () {
               Navigator.of(context).pop();
-              ref.read(SingleAccountPageState.ofEnvProvider(context1)(getProviderName(context1))).delEnv(context1, bean.sId!);
+              ref
+                  .read(SingleAccountPageState.ofEnvProvider(context1)(
+                      getProviderName(context1)))
+                  .delEnv(context1, bean.sId!);
             },
           ),
         ],
