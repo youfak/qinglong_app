@@ -73,10 +73,18 @@ class OtherPageState extends ConsumerState<OtherPage>
 
   @override
   Widget build(BuildContext context) {
+    bool isDark = ref.watch(themeProvider).themeMode == modeDark;
+    Color primaryColor = ref.watch(themeProvider).primaryColor;
+    Color titleColor = ref.watch(themeProvider).themeColor.titleColor();
+    Color descColor = ref.watch(themeProvider).themeColor.descColor();
+    Color cardBg = ref.watch(themeProvider).themeColor.settingBgColor();
+    Color pageBg = ref.watch(themeProvider).themeColor.bg2Color();
+
     return Scaffold(
-      backgroundColor: ref.watch(themeProvider).themeColor.bg2Color(),
+      backgroundColor: pageBg,
       body: RefreshIndicator(
         key: refreshKey,
+        color: primaryColor,
         onRefresh: () async {
           await loadPoet();
         },
@@ -90,717 +98,688 @@ class OtherPageState extends ConsumerState<OtherPage>
             ),
             child: Column(
               children: [
-                Container(
-                  width: MediaQuery.of(context).size.width,
-                  height: 250,
-                  decoration: BoxDecoration(
-                    image: (ref.watch(themeProvider).themeMode == modeDark)
-                        ? null
-                        : const DecorationImage(
-                            image:
-                                AssetImage('assets/images/icon_other_bg.png'),
-                            fit: BoxFit.cover,
+                // 1. Modern Profile Hero Section
+                _buildProfileHero(context, isDark, primaryColor, titleColor, descColor, cardBg),
+
+                const SizedBox(height: 12),
+
+                // 2. Primary Feature Hub (Subscriptions, Scripts, Dependencies)
+                _buildFeatureHub(context, isDark, primaryColor, titleColor, cardBg),
+
+                const SizedBox(height: 14),
+
+                // 3. Multi-Account & Cloud Sync
+                _buildSectionCard(
+                  title: "多账号与云端",
+                  icon: CupertinoIcons.person_2,
+                  isDark: isDark,
+                  cardBg: cardBg,
+                  primaryColor: primaryColor,
+                  children: [
+                    _buildSettingTile(
+                      title: "多账号管理",
+                      subtitle: "配置多实例账号支持",
+                      icon: CupertinoIcons.person_badge_plus,
+                      iconColor: const Color(0xff10B981),
+                      onTap: () {
+                        if (SpUtil.getBool(spSingleInstance, defValue: false)) {
+                          '请先进入 系统设置 关闭单实例模式'.toast();
+                          return;
+                        }
+                        Navigator.of(context).push(
+                          CupertinoPageRoute(
+                            builder: (context) => const UpdateMaxAccountPage(),
                           ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(
-                        height: kToolbarHeight + 25,
-                      ),
-                      GestureDetector(
-                        behavior: HitTestBehavior.opaque,
+                        );
+                      },
+                    ),
+                    if (!SpUtil.getBool(spSingleInstance, defValue: false))
+                      _buildSettingTile(
+                        title: "账号排序",
+                        subtitle: "调整面板账号展示顺序",
+                        icon: CupertinoIcons.arrow_up_arrow_down,
+                        iconColor: const Color(0xff3B82F6),
                         onTap: () {
-                          if (SpUtil.getInt(spVIP, defValue: typeNormal) ==
-                              typeNormal) {
-                            Navigator.of(context).push(
-                              CupertinoPageRoute(
-                                builder: (context) => const InAppPurchasePage(
-                                  fromDirectly: true,
-                                ),
-                              ),
-                            );
-                            return;
-                          } else {
-                            if (SpUtil.getBool(spSingleInstance,
-                                defValue: false)) {
-                              return;
-                            }
-                            Navigator.of(context).push(
-                              PageRouteBuilder(
-                                pageBuilder:
-                                    (context, animation1, animation2) =>
-                                        const ChangeAccountPage(),
-                                transitionDuration: Duration.zero,
-                                reverseTransitionDuration: Duration.zero,
-                              ),
-                            );
-                          }
+                          Navigator.of(context).push(
+                            CupertinoPageRoute(
+                              builder: (context) => const SortAccountPage(),
+                            ),
+                          );
                         },
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(
-                              width: 15,
-                            ),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: (userIcon != null && userIcon!.isNotEmpty)
-                                  ? CachedNetworkImage(
-                                      imageUrl: userIcon!,
-                                      width: 60,
-                                      height: 60,
-                                      placeholder: (_, __) {
-                                        return Image.asset(
-                                          getImageByVIPLogo(),
-                                          width: 60,
-                                          height: 60,
-                                        );
-                                      },
-                                      errorWidget: (_, __, ___) {
-                                        return Image.asset(
-                                          getImageByVIPLogo(),
-                                          width: 60,
-                                          height: 60,
-                                        );
-                                      },
-                                    )
-                                  : Image.asset(
-                                      getImageByVIPLogo(),
-                                      width: 60,
-                                      height: 60,
-                                    ),
-                            ),
-                            const SizedBox(
-                              width: 15,
-                            ),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const SizedBox(
-                                    height: 5,
-                                  ),
-                                  Row(
-                                    children: [
-                                      Flexible(
-                                        child: Text(
-                                          (SingleAccountPageState.ofUserInfo(
-                                                              context)
-                                                          .alias ==
-                                                      null ||
-                                                  SingleAccountPageState
-                                                          .ofUserInfo(context)
-                                                      .alias!
-                                                      .isEmpty)
-                                              ? userName
-                                              : SingleAccountPageState
-                                                      .ofUserInfo(context)
-                                                  .alias!,
-                                          maxLines: 1,
-                                          style: TextStyle(
-                                            color: ref
-                                                .watch(themeProvider)
-                                                .themeColor
-                                                .titleColor(),
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                        fit: FlexFit.loose,
-                                      ),
-
-                                    ],
-                                  ),
-                                  const SizedBox(
-                                    height: 5,
-                                  ),
-                                  Obx(
-                                    () => GestureDetector(
-                                      behavior: HitTestBehavior.opaque,
-                                      onTap: () {
-                                        if (poetData.isEmpty) return;
-                                        Navigator.of(context).push(
-                                          CupertinoPageRoute(
-                                            builder: (context) => PoetPage(
-                                              data: poetData,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                      child: Text(
-                                        desc.value,
-                                        style: TextStyle(
-                                          color: ref
-                                              .watch(themeProvider)
-                                              .themeColor
-                                              .descColor(),
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
                       ),
-                      const Spacer(),
-                      Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 15),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                          color: ref
-                              .watch(themeProvider)
-                              .themeColor
-                              .settingBordorColor(),
-                        ),
-                        child: Row(
-                          children: [
-                            const SizedBox(
-                              width: 20,
-                            ),
-                            Expanded(
-                              flex: 2,
-                              child: Column(
-                                children: [
-                                  const SizedBox(
-                                    height: 10,
-                                  ),
-                                  CupertinoButton(
-                                    padding: EdgeInsets.zero,
-                                    onPressed: () {
-                                      if (getIt<SystemBean>(
-                                              instanceName:
-                                                  (SingleAccountPageState.of(
-                                                                  context)
-                                                              ?.index ??
-                                                          0)
-                                                      .toString())
-                                          .isUpperVersion2_13_0()) {
-                                        Navigator.of(context).pushNamed(
-                                          Routes.routeSubscribeList,
-                                        );
-                                      } else {
-                                        Navigator.of(context).push(
-                                          CupertinoPageRoute(
-                                            builder: (context) =>
-                                                const TaskPage(
-                                              onlyShowPullRepo: true,
-                                            ),
-                                          ),
-                                        );
-                                      }
-                                    },
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 15,
-                                        vertical: 10,
-                                      ),
-                                      child: Column(
-                                        children: [
-                                          Image.asset(
-                                            "assets/images/icon_subsctibe.png",
-                                            width: 30,
-                                            fit: BoxFit.cover,
-                                          ),
-                                          const SizedBox(
-                                            height: 5,
-                                          ),
-                                          Text(
-                                            getIt<SystemBean>(
-                                                        instanceName:
-                                                            (SingleAccountPageState.of(
-                                                                            context)
-                                                                        ?.index ??
-                                                                    0)
-                                                                .toString())
-                                                    .isUpperVersion2_13_0()
-                                                ? "订阅管理"
-                                                : "拉库管理",
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              color: ref
-                                                  .watch(themeProvider)
-                                                  .themeColor
-                                                  .titleColor(),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(
-                                    height: 10,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Expanded(
-                              flex: 2,
-                              child: Column(
-                                children: [
-                                  const SizedBox(
-                                    height: 10,
-                                  ),
-                                  CupertinoButton(
-                                    padding: EdgeInsets.zero,
-                                    onPressed: () {
-                                      Navigator.of(context).pushNamed(
-                                        Routes.routeScript,
-                                      );
-                                    },
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 15,
-                                        vertical: 10,
-                                      ),
-                                      child: Column(
-                                        children: [
-                                          Image.asset(
-                                            "assets/images/icon_s.png",
-                                            width: 30,
-                                            fit: BoxFit.cover,
-                                          ),
-                                          const SizedBox(
-                                            height: 5,
-                                          ),
-                                          Text(
-                                            "脚本管理",
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              color: ref
-                                                  .watch(themeProvider)
-                                                  .themeColor
-                                                  .titleColor(),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(
-                                    height: 10,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Expanded(
-                              flex: 2,
-                              child: Column(
-                                children: [
-                                  const SizedBox(
-                                    height: 10,
-                                  ),
-                                  CupertinoButton(
-                                    padding: EdgeInsets.zero,
-                                    onPressed: () {
-                                      Navigator.of(context).pushNamed(
-                                        Routes.routeDependency,
-                                      );
-                                    },
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 15,
-                                        vertical: 10,
-                                      ),
-                                      child: Column(
-                                        children: [
-                                          Image.asset(
-                                            "assets/images/icon_d.png",
-                                            width: 30,
-                                            fit: BoxFit.cover,
-                                          ),
-                                          const SizedBox(
-                                            height: 5,
-                                          ),
-                                          Text(
-                                            "依赖管理",
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              color: ref
-                                                  .watch(themeProvider)
-                                                  .themeColor
-                                                  .titleColor(),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(
-                                    height: 10,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(
-                              width: 20,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  margin: const EdgeInsets.only(
-                    left: 15,
-                    right: 15,
-                    top: 20,
-                  ),
-                  child: InkWell(
-                    borderRadius: const BorderRadius.all(
-                      Radius.circular(10),
+                    _buildSettingTile(
+                      title: "配置与文件备份",
+                      subtitle: "本地/iCloud 备份青龙数据",
+                      icon: CupertinoIcons.cloud_upload,
+                      iconColor: const Color(0xff8B5CF6),
+                      hideDivider: true,
+                      onTap: () {
+                        Navigator.of(context).pushNamed(Routes.routeICloud);
+                      },
                     ),
-                    onTap: () {
-                      Navigator.of(context)
-                          .push(
-                        CupertinoPageRoute(
-                          builder: (context) => const InAppPurchasePage(
-                            fromDirectly: true,
-                          ),
-                        ),
-                      )
-                          .then((value) {
-                        setState(() {});
-                      });
-                    },
-                    child: Ink(
-                      decoration: BoxDecoration(
-                        color: ref
-                            .watch(themeProvider)
-                            .themeColor
-                            .settingBordorColor(),
-                        borderRadius: const BorderRadius.all(
-                          Radius.circular(10),
-                        ),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.only(
-                          top: 12,
-                          bottom: 12,
-                          left: 15,
-                          right: 15,
-                        ),
-                        child: Row(
-                          children: [
-                            Text(
-                              "APP功能介绍",
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 16,
-                                color: ref
-                                    .watch(themeProvider)
-                                    .themeColor
-                                    .titleColor(),
-                              ),
-                            ),
-                            const Spacer(),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
+                  ],
                 ),
-                const SizedBox(
-                  height: 20,
-                ),
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 15),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    color: ref
-                        .watch(themeProvider)
-                        .themeColor
-                        .settingBordorColor(),
-                  ),
-                  width: MediaQuery.of(context).size.width,
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 10,
-                    horizontal: 15,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(
-                        height: 5,
-                      ),
-                      Text(
-                        "多帐号设置",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                          color: ref
-                              .watch(themeProvider)
-                              .themeColor
-                              .titleColor(),
-                        ),
-                      ),
-                      const SizedBox(
-                        height: 10,
-                      ),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: buildOtherFun2(
-                                "多账号数", CupertinoIcons.infinite, () {
-                              if (SpUtil.getBool(spSingleInstance,
-                                  defValue: false)) {
-                                '请先进入 系统设置 关闭单实例模式'.toast();
-                                return;
-                              }
 
-                              Navigator.of(context).push(
-                                CupertinoPageRoute(
-                                  builder: (context) =>
-                                      const UpdateMaxAccountPage(),
-                                ),
-                              );
-                            }),
+                const SizedBox(height: 14),
+
+                // 4. Developer Tools & Logs
+                _buildSectionCard(
+                  title: "日志与开发工具",
+                  icon: CupertinoIcons.wrench,
+                  isDark: isDark,
+                  cardBg: cardBg,
+                  primaryColor: primaryColor,
+                  children: [
+                    _buildSettingTile(
+                      title: "任务日志",
+                      subtitle: "查看青龙定时任务运行历史",
+                      icon: CupertinoIcons.list_bullet_below_rectangle,
+                      iconColor: const Color(0xff06B6D4),
+                      onTap: () {
+                        Navigator.of(context).pushNamed(Routes.routeTaskLog);
+                      },
+                    ),
+                    _buildSettingTile(
+                      title: "登录日志",
+                      subtitle: "查看面板用户登录记录",
+                      icon: CupertinoIcons.person_crop_circle_badge_checkmark,
+                      iconColor: const Color(0xff6366F1),
+                      onTap: () {
+                        if (SingleAccountPageState.ofUserInfo(context).useSecretLogined) {
+                          "使用 Client ID 方式登录无法获取登录日志".toast();
+                        } else {
+                          Navigator.of(context).pushNamed(Routes.routeLoginLog);
+                        }
+                      },
+                    ),
+                    _buildSettingTile(
+                      title: "扫描依赖",
+                      subtitle: "一键分析脚本所需语言依赖包",
+                      icon: CupertinoIcons.doc_text_search,
+                      iconColor: const Color(0xffEC4899),
+                      onTap: () {
+                        Navigator.of(context).push(
+                          CupertinoPageRoute(
+                            builder: (context) => const ScanPage(),
                           ),
-                          const Spacer(),
-                          const Spacer(),
-                          const Spacer(),
-                        ],
-                      ),
-                    ],
-                  ),
+                        );
+                      },
+                    ),
+                    _buildSettingTile(
+                      title: "日志清理频率",
+                      subtitle: "自动清理过期任务运行日志",
+                      icon: CupertinoIcons.trash,
+                      iconColor: const Color(0xffF97316),
+                      hideDivider: true,
+                      onTap: () {
+                        _delLog(context);
+                      },
+                    ),
+                  ],
                 ),
-                const SizedBox(
-                  height: 20,
-                ),
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 15),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    color: ref
-                        .watch(themeProvider)
-                        .themeColor
-                        .settingBordorColor(),
-                  ),
-                  width: MediaQuery.of(context).size.width,
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 10,
-                    horizontal: 15,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(
-                        height: 5,
-                      ),
-                      Text(
-                        "高级功能",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                          color: ref
-                              .watch(themeProvider)
-                              .themeColor
-                              .titleColor(),
-                        ),
-                      ),
-                      const SizedBox(
-                        height: 10,
-                      ),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: buildOtherFun2(
-                                "扫描依赖", CupertinoIcons.doc_text_search, () {
-                              Navigator.of(context).push(
-                                CupertinoPageRoute(
-                                  builder: (context) => const ScanPage(),
-                                ),
-                              );
-                            }),
+
+                const SizedBox(height: 14),
+
+                // 5. System Preferences
+                _buildSectionCard(
+                  title: "系统偏好与关于",
+                  icon: CupertinoIcons.gear,
+                  isDark: isDark,
+                  cardBg: cardBg,
+                  primaryColor: primaryColor,
+                  children: [
+                    _buildSettingTile(
+                      title: "应用设置",
+                      subtitle: "青龙 OpenAPI Key 及网络配置",
+                      icon: CupertinoIcons.slider_horizontal_3,
+                      iconColor: const Color(0xff14B8A6),
+                      onTap: () {
+                        Navigator.of(context).push(
+                          CupertinoPageRoute(
+                            builder: (context) => const AppKeyPage(),
                           ),
-                          Expanded(
-                            child: buildOtherFun2(
-                              "字体大小",
-                              CupertinoIcons.textformat_size,
-                              () {
-                                Navigator.of(context).push(
-                                  CupertinoPageRoute(
-                                      builder: (context) =>
-                                          const TextSizePage()),
-                                );
-                              },
+                        );
+                      },
+                    ),
+                    _buildSettingTile(
+                      title: "通知推送",
+                      subtitle: "任务运行完成/异常通知渠道",
+                      icon: CupertinoIcons.bell,
+                      iconColor: const Color(0xffF59E0B),
+                      onTap: () {
+                        Navigator.of(context).push(
+                          CupertinoPageRoute(
+                            builder: (context) => const PushSettingPage(),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildSettingTile(
+                      title: "修改密码",
+                      subtitle: "修改当前青龙登录用户密码",
+                      icon: CupertinoIcons.lock_shield,
+                      iconColor: const Color(0xff64748B),
+                      onTap: () {
+                        if (SingleAccountPageState.ofUserInfo(context).useSecretLogined) {
+                          "使用 Client ID 方式登录无法修改密码".toast();
+                        } else {
+                          Navigator.of(context).push(
+                            CupertinoPageRoute(
+                              builder: (context) => const UpdatePasswordPage(),
                             ),
+                          );
+                        }
+                      },
+                    ),
+                    _buildSettingTile(
+                      title: "字体大小",
+                      subtitle: "自定义界面文字排版尺寸",
+                      icon: CupertinoIcons.textformat_size,
+                      iconColor: const Color(0xff3B82F6),
+                      onTap: () {
+                        Navigator.of(context).push(
+                          CupertinoPageRoute(
+                            builder: (context) => const TextSizePage(),
                           ),
-                          Expanded(
-                            child: buildOtherFun2(
-                                "文件备份", CupertinoIcons.cloud_upload, () {
-                              Navigator.of(context)
-                                  .pushNamed(Routes.routeICloud);
-                            }),
-                          ),
-                          Expanded(
-                            child: SpUtil.getBool(spSingleInstance,
-                                    defValue: false)
-                                ? const SizedBox.shrink()
-                                : buildOtherFun2(
-                                    "账号排序", CupertinoIcons.arrow_swap, () {
-                                    Navigator.of(context).push(
-                                      CupertinoPageRoute(
-                                        builder: (context) =>
-                                            const SortAccountPage(),
-                                      ),
-                                    );
-                                  }),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(
-                        height: 10,
-                      ),
-                    ],
-                  ),
+                        );
+                      },
+                    ),
+                    _buildSettingTile(
+                      title: "系统设置",
+                      subtitle: "深色模式、单实例模式及高级开关",
+                      icon: CupertinoIcons.shield_lefthalf_fill,
+                      iconColor: const Color(0xff10B981),
+                      onTap: () {
+                        Navigator.of(context).pushNamed(Routes.routeSetting);
+                      },
+                    ),
+                    _buildSettingTile(
+                      title: "关于软件",
+                      subtitle: "版本信息与开源致谢",
+                      icon: CupertinoIcons.info_circle,
+                      iconColor: const Color(0xff8B5CF6),
+                      hideDivider: true,
+                      onTap: () {
+                        Navigator.of(context).pushNamed(Routes.routeAbout);
+                      },
+                    ),
+                  ],
                 ),
-                const SizedBox(
-                  height: 20,
-                ),
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 15),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    color: ref
-                        .watch(themeProvider)
-                        .themeColor
-                        .settingBordorColor(),
-                  ),
-                  width: MediaQuery.of(context).size.width,
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 10,
-                    horizontal: 15,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(
-                        height: 5,
-                      ),
-                      Text(
-                        "基础功能",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                          color:
-                              ref.watch(themeProvider).themeColor.titleColor(),
-                        ),
-                      ),
-                      const SizedBox(
-                        height: 10,
-                      ),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: buildOtherFun(
-                                "任务日志", "assets/images/icon_task_log.png", () {
-                              Navigator.of(context).pushNamed(
-                                Routes.routeTaskLog,
-                              );
-                            }),
-                          ),
-                          Expanded(
-                            child: buildOtherFun(
-                                "登录日志", "assets/images/icon_login_icon.png",
-                                () {
-                              if (SingleAccountPageState.ofUserInfo(context)
-                                  .useSecretLogined) {
-                                "使用client_id方式登录无法获取登录日志".toast();
-                              } else {
-                                Navigator.of(context).pushNamed(
-                                  Routes.routeLoginLog,
-                                );
-                              }
-                            }),
-                          ),
-                          Expanded(
-                            child: buildOtherFun2(
-                              "应用设置",
-                              CupertinoIcons.gear_alt,
-                              () {
-                                Navigator.of(context).push(CupertinoPageRoute(
-                                    builder: (context) => const AppKeyPage()));
-                              },
-                            ),
-                          ),
-                          Expanded(
-                            child: buildOtherFun2(
-                              "通知设置",
-                              CupertinoIcons.envelope,
-                              () {
-                                Navigator.of(context).push(CupertinoPageRoute(
-                                    builder: (context) =>
-                                        const PushSettingPage()));
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(
-                        height: 10,
-                      ),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: buildOtherFun2(
-                                "修改密码", CupertinoIcons.lock_shield, () {
-                              if (SingleAccountPageState.ofUserInfo(context)
-                                  .useSecretLogined) {
-                                "使用client_id方式登录无法修改密码".toast();
-                              } else {
-                                Navigator.of(context).push(CupertinoPageRoute(
-                                    builder: (context) =>
-                                        const UpdatePasswordPage()));
-                              }
-                            }),
-                          ),
-                          Expanded(
-                            child: buildOtherFun2(
-                                "日志设置", CupertinoIcons.gobackward_30, () {
-                              _delLog(context);
-                            }),
-                          ),
-                          Expanded(
-                            child: buildOtherFun(
-                              "系统设置",
-                              "assets/images/icon_safety.png",
-                              () {
-                                Navigator.of(context).pushNamed(
-                                  Routes.routeSetting,
-                                );
-                              },
-                            ),
-                          ),
-                          Expanded(
-                            child: buildOtherFun(
-                              "关于软件",
-                              "assets/images/icon_about.png",
-                              () {
-                                Navigator.of(context).pushNamed(
-                                  Routes.routeAbout,
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(
-                  height: kBottomNavigationBarHeight +
-                      MediaQuery.of(context).viewPadding.bottom,
-                ),
+
+                const SizedBox(height: 30),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildProfileHero(
+    BuildContext context,
+    bool isDark,
+    Color primaryColor,
+    Color titleColor,
+    Color descColor,
+    Color cardBg,
+  ) {
+    String currentAlias = SingleAccountPageState.ofUserInfo(context).alias ?? "";
+    String displayName = currentAlias.isNotEmpty ? currentAlias : userName;
+    String host = SingleAccountPageState.ofUserInfo(context).host ?? "";
+
+    return Container(
+      width: MediaQuery.of(context).size.width,
+      padding: EdgeInsets.fromLTRB(
+        16,
+        MediaQuery.of(context).padding.top + 16,
+        16,
+        18,
+      ),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            primaryColor.withOpacity(isDark ? 0.22 : 0.12),
+            isDark ? const Color(0xff18181B) : Colors.white,
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Avatar
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: primaryColor.withOpacity(0.3),
+                    width: 2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: primaryColor.withOpacity(0.15),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: (userIcon != null && userIcon!.isNotEmpty)
+                      ? CachedNetworkImage(
+                          imageUrl: userIcon!,
+                          width: 58,
+                          height: 58,
+                          fit: BoxFit.cover,
+                          placeholder: (_, __) => Image.asset(
+                            getImageByVIPLogo(),
+                            width: 58,
+                            height: 58,
+                          ),
+                          errorWidget: (_, __, ___) => Image.asset(
+                            getImageByVIPLogo(),
+                            width: 58,
+                            height: 58,
+                          ),
+                        )
+                      : Image.asset(
+                          getImageByVIPLogo(),
+                          width: 58,
+                          height: 58,
+                        ),
+                ),
+              ),
+              const SizedBox(width: 14),
+
+              // User Info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            displayName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: titleColor,
+                              fontSize: 19,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    if (host.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xff27272A) : const Color(0xffE2E8F0),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          host.replaceFirst(RegExp(r'^https?://'), ''),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 11,
+                            color: descColor,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+
+              // Switch Account Button
+              CupertinoButton(
+                padding: const EdgeInsets.all(8),
+                borderRadius: BorderRadius.circular(12),
+                color: isDark ? const Color(0xff27272A) : const Color(0xffF1F5F9),
+                onPressed: () {
+                  if (SpUtil.getBool(spSingleInstance, defValue: false)) {
+                    "当前处于单实例模式".toast();
+                    return;
+                  }
+                  Navigator.of(context).push(
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation1, animation2) =>
+                          const ChangeAccountPage(),
+                      transitionDuration: Duration.zero,
+                      reverseTransitionDuration: Duration.zero,
+                    ),
+                  );
+                },
+                child: Icon(
+                  CupertinoIcons.arrow_2_squarepath,
+                  size: 20,
+                  color: primaryColor,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 14),
+
+          // Poetic Quote Banner
+          Obx(
+            () => GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                if (poetData.isEmpty) return;
+                Navigator.of(context).push(
+                  CupertinoPageRoute(
+                    builder: (context) => PoetPage(data: poetData),
+                  ),
+                );
+              },
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xff22222A) : const Color(0xffF8FAFC),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: isDark ? const Color(0xff2E2E38) : const Color(0xffE2E8F0),
+                    width: 0.8,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      CupertinoIcons.quote_bubble,
+                      size: 14,
+                      color: primaryColor,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        desc.value,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: descColor,
+                          fontSize: 12,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ),
+                    Icon(
+                      CupertinoIcons.chevron_right,
+                      size: 12,
+                      color: descColor.withOpacity(0.5),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeatureHub(
+    BuildContext context,
+    bool isDark,
+    Color primaryColor,
+    Color titleColor,
+    Color cardBg,
+  ) {
+    bool isUpper2_13 = false;
+    try {
+      isUpper2_13 = getIt<SystemBean>(
+        instanceName: (SingleAccountPageState.of(context)?.index ?? 0).toString(),
+      ).isUpperVersion2_13_0();
+    } catch (e) {
+      isUpper2_13 = true;
+    }
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 14),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildHubCard(
+              title: isUpper2_13 ? "订阅管理" : "拉库管理",
+              icon: CupertinoIcons.arrow_2_circlepath_circle_fill,
+              iconColor: const Color(0xff10B981),
+              cardBg: cardBg,
+              isDark: isDark,
+              titleColor: titleColor,
+              onTap: () {
+                if (isUpper2_13) {
+                  Navigator.of(context).pushNamed(Routes.routeSubscribeList);
+                } else {
+                  Navigator.of(context).push(
+                    CupertinoPageRoute(
+                      builder: (context) => const TaskPage(onlyShowPullRepo: true),
+                    ),
+                  );
+                }
+              },
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: _buildHubCard(
+              title: "脚本管理",
+              icon: CupertinoIcons.doc_text_fill,
+              iconColor: const Color(0xff3B82F6),
+              cardBg: cardBg,
+              isDark: isDark,
+              titleColor: titleColor,
+              onTap: () {
+                Navigator.of(context).pushNamed(Routes.routeScript);
+              },
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: _buildHubCard(
+              title: "依赖管理",
+              icon: CupertinoIcons.cube_box_fill,
+              iconColor: const Color(0xff8B5CF6),
+              cardBg: cardBg,
+              isDark: isDark,
+              titleColor: titleColor,
+              onTap: () {
+                Navigator.of(context).pushNamed(Routes.routeDependency);
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHubCard({
+    required String title,
+    required IconData icon,
+    required Color iconColor,
+    required Color cardBg,
+    required bool isDark,
+    required Color titleColor,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: cardBg,
+      borderRadius: BorderRadius.circular(14),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: isDark ? const Color(0xff27272A) : const Color(0xffE2E8F0),
+              width: 0.8,
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: iconColor.withOpacity(0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: iconColor, size: 22),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: titleColor,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionCard({
+    required String title,
+    required IconData icon,
+    required bool isDark,
+    required Color cardBg,
+    required Color primaryColor,
+    required List<Widget> children,
+  }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? const Color(0xff27272A) : const Color(0xffE2E8F0),
+          width: 0.8,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+            child: Row(
+              children: [
+                Icon(icon, size: 15, color: primaryColor),
+                const SizedBox(width: 8),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: primaryColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettingTile({
+    required String title,
+    String? subtitle,
+    required IconData icon,
+    required Color iconColor,
+    required VoidCallback onTap,
+    bool hideDivider = false,
+  }) {
+    bool isDark = ref.watch(themeProvider).themeMode == modeDark;
+    Color titleColor = ref.watch(themeProvider).themeColor.titleColor();
+    Color descColor = ref.watch(themeProvider).themeColor.descColor();
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(7),
+                    decoration: BoxDecoration(
+                      color: iconColor.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(9),
+                    ),
+                    child: Icon(icon, size: 18, color: iconColor),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                            color: titleColor,
+                          ),
+                        ),
+                        if (subtitle != null && subtitle.isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            subtitle,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: descColor,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    CupertinoIcons.chevron_right,
+                    size: 15,
+                    color: descColor.withOpacity(0.6),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        if (!hideDivider)
+          Divider(
+            height: 1,
+            indent: 52,
+            endIndent: 16,
+            thickness: 0.5,
+            color: isDark ? const Color(0xff27272A) : const Color(0xffF1F5F9),
+          ),
+      ],
     );
   }
 

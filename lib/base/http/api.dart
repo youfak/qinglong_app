@@ -316,16 +316,49 @@ class Api {
   }
 
   Future<HttpResponse<String>> content(String name) async {
-    return await getIt<Http>(instanceName: index.toString()).get<String>(
-      getIt<Url>(instanceName: index.toString()).configContent + name,
-      null,
+    var http = getIt<Http>(instanceName: index.toString());
+    var url = getIt<Url>(instanceName: index.toString());
+
+    // 1. Try modern Qinglong API: GET /open/configs/detail?path=...
+    var response = await http.getScriptContent(
+      url.configDetail,
+      {"path": name},
     );
+    if (response.success) {
+      return response;
+    }
+
+    // 2. Try with file=... query parameter
+    var responseFile = await http.getScriptContent(
+      url.configDetail,
+      {"file": name},
+    );
+    if (responseFile.success) {
+      return responseFile;
+    }
+
+    // 3. Fallback to legacy GET /open/configs/:name only if server returned 404 (old panel)
+    if (response.code == 404) {
+      var legacyResponse = await http.getScriptContent(
+        url.configContent + name,
+        null,
+      );
+      if (legacyResponse.success) {
+        return legacyResponse;
+      }
+    }
+
+    return response;
   }
 
   Future<HttpResponse<NullResponse>> saveFile(String name, String content) async {
     return await getIt<Http>(instanceName: index.toString()).post<NullResponse>(
       getIt<Url>(instanceName: index.toString()).saveFile,
-      {"content": content, "name": name},
+      {
+        "content": content,
+        "name": name,
+        "path": name,
+      },
     );
   }
 
