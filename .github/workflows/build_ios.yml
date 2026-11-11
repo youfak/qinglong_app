@@ -19,7 +19,7 @@ on:
 jobs:
   build:
     name: Build iOS Release IPA
-    runs-on: macos-13
+    runs-on: macos-14
 
     steps:
       - name: Checkout repository
