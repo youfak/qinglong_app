@@ -77,6 +77,10 @@ class QlAppBar extends ConsumerWidget with PreferredSizeWidget {
         },
         child: Text(
           title,
+          style: const TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
       centerTitle: true,

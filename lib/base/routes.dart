@@ -121,10 +121,11 @@ class Routes {
           builder: (context) => const DependencyPage(),
         );
       case routeScriptDetail:
+        var scriptArgs = settings.arguments as Map?;
         return CupertinoPageRoute(
           builder: (context) => ScriptDetailPage(
-            title: (settings.arguments as Map)["title"],
-            path: (settings.arguments as Map)["path"],
+            title: scriptArgs?["title"]?.toString() ?? "",
+            path: scriptArgs?["path"]?.toString() ?? "",
           ),
         );
       case routeTaskDetail:
@@ -154,11 +155,12 @@ class Routes {
           builder: (context) => const AboutPage(),
         );
       case routeScriptUpdate:
+        var updateArgs = settings.arguments as Map?;
         return CupertinoPageRoute(
           builder: (context) => ScriptEditPage(
-            (settings.arguments as Map)["title"],
-            (settings.arguments as Map)["path"],
-            (settings.arguments as Map)["content"],
+            updateArgs?["title"]?.toString() ?? "",
+            updateArgs?["path"]?.toString() ?? "",
+            updateArgs?["content"]?.toString() ?? "",
           ),
         );
       case routeScriptAdd:

@@ -17,81 +17,90 @@ class SearchCell extends ConsumerStatefulWidget {
 }
 
 class _SearchCellState extends ConsumerState<SearchCell> {
-  int searchTextWidth = 0;
-
   @override
   void initState() {
     super.initState();
+    widget.controller.addListener(_onTextChange);
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onTextChange);
+    super.dispose();
+  }
+
+  void _onTextChange() {
+    if (mounted) setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
-    TextPainter textPainter = TextPainter(
-      text: const TextSpan(
-        text: "搜索",
-        style: TextStyle(
-          fontSize: 14,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-      textScaleFactor: MediaQuery.of(context).textScaleFactor,
-    );
-    textPainter.layout();
-    return CupertinoTextField.borderless(
-      maxLines: 1,
-      textAlign: widget.controller.text.isNotEmpty ? TextAlign.center : TextAlign.start,
+    final isDark = ref.watch(themeProvider).themeMode == modeDark;
+    final descColor = ref.watch(themeProvider).themeColor.descColor();
+    final titleColor = ref.watch(themeProvider).themeColor.title2Color();
+
+    return Container(
+      height: 40,
       decoration: BoxDecoration(
-        color: ref.watch(themeProvider).themeColor.pinedAndWhite(),
-        borderRadius: BorderRadius.circular(
-          10,
+        color: isDark ? const Color(0xff22222b) : const Color(0xfff1f4f8),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark ? const Color(0xff2d2d38) : const Color(0xffe2e8f0),
+          width: 0.8,
         ),
       ),
-      suffixMode: OverlayVisibilityMode.editing,
-      suffix: GestureDetector(
-        onTap: () {
-          widget.controller.text = "";
-          setState(() {});
-        },
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 15,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(
+            CupertinoIcons.search,
+            size: 18,
+            color: descColor,
           ),
-          child: Icon(
-            CupertinoIcons.clear_circled_solid,
-            size: 20,
-            color: ref.watch(themeProvider).themeColor.descColor(),
+          const SizedBox(width: 8),
+          Expanded(
+            child: TextField(
+              controller: widget.controller,
+              maxLines: 1,
+              style: TextStyle(
+                fontSize: 14.5,
+                color: titleColor,
+              ),
+              decoration: InputDecoration(
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                hintText: "搜索任务名称、命令、规则...",
+                hintStyle: TextStyle(
+                  fontSize: 13.5,
+                  color: descColor.withOpacity(0.8),
+                ),
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+              ),
+              onEditingComplete: () {
+                FocusScope.of(context).requestFocus(FocusNode());
+              },
+            ),
           ),
-        ),
+          if (widget.controller.text.isNotEmpty)
+            GestureDetector(
+              onTap: () {
+                widget.controller.clear();
+                setState(() {});
+              },
+              child: Padding(
+                padding: const EdgeInsets.only(left: 6),
+                child: Icon(
+                  CupertinoIcons.clear_circled_solid,
+                  size: 18,
+                  color: descColor,
+                ),
+              ),
+            ),
+        ],
       ),
-      controller: widget.controller,
-      padding: const EdgeInsets.symmetric(
-        horizontal: 5,
-        vertical: 7,
-      ),
-      prefixMode: OverlayVisibilityMode.notEditing,
-      onEditingComplete: () {
-        FocusScope.of(context).requestFocus(FocusNode());
-      },
-      prefix: Padding(
-        padding: EdgeInsets.only(
-          left: MediaQuery.of(context).size.width / 2 - textPainter.width - 15 - 5,
-        ),
-        child: Image.asset(
-          "assets/images/icon_search.png",
-          width: 18,
-          color: ref.watch(themeProvider).themeColor.descColor(),
-          fit: BoxFit.cover,
-        ),
-      ),
-      placeholderStyle: TextStyle(
-        fontSize: 14,
-        color: ref.watch(themeProvider).themeColor.descColor(),
-      ),
-      style: TextStyle(
-        fontSize: 16,
-        color: ref.watch(themeProvider).themeColor.title2Color(),
-      ),
-      placeholder: "搜索",
     );
   }
 }

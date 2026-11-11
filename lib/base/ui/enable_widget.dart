@@ -20,21 +20,23 @@ class StatusWidget extends ConsumerWidget {
   Widget build(BuildContext context, ref) {
     return Container(
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(2),
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: color,
-          width: 1,
+          color: color.withOpacity(0.4),
+          width: 0.8,
         ),
       ),
       padding: const EdgeInsets.symmetric(
-        horizontal: 3,
+        horizontal: 6,
+        vertical: 2,
       ),
       child: Text(
         title,
         style: TextStyle(
           color: color,
-          fontSize: 9,
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );

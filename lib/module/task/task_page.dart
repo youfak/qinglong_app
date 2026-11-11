@@ -898,23 +898,7 @@ class _ListBodyState extends ConsumerState<ListBodyWidget> with AutomaticKeepAli
       },
       itemCount: widget.list.length,
       separatorBuilder: (BuildContext context, int index) {
-        TaskBean item = widget.list[index];
-        if (widget.searchText.isEmpty ||
-            (item.name?.toLowerCase().contains(widget.searchText.toLowerCase()) ?? false) ||
-            (item.command?.toLowerCase().contains(widget.searchText.toLowerCase()) ?? false) ||
-            (item.schedule?.contains(widget.searchText.toLowerCase()) ?? false)) {
-          return Container(
-            color: item.isPinned == 1
-                ? ref.watch(themeProvider).themeColor.pinColor()
-                : ref.watch(themeProvider).themeColor.settingBgColor(),
-            child: Divider(
-              height: 1,
-              indent: widget.editMode ? 55 : 15,
-            ),
-          );
-        } else {
-          return const SizedBox.shrink();
-        }
+        return const SizedBox(height: 2);
       },
     );
   }
@@ -939,240 +923,345 @@ class TaskItemCell extends StatelessWidget {
     required this.checked,
   }) : super(key: key);
 
+  void openScript(BuildContext context) {
+    var info = ScriptPathInfo.parse(bean.command);
+    if (info.title.isNotEmpty) {
+      Navigator.of(context).pushNamed(Routes.routeScriptDetail, arguments: {
+        "title": info.title,
+        "path": info.path,
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Slidable(
-      enabled: !editMode,
-      key: ValueKey(bean.sId),
-      endActionPane: ActionPane(
-        motion: const StretchMotion(),
-        extentRatio: 0.7,
-        children: [
-          SlidableAction(
-            backgroundColor: const Color(0xff5D5E70),
-            onPressed: (_) {
-              Navigator.of(context).push(
-                CupertinoPageRoute(
-                  builder: (context) => AddTaskPage(
-                    taskBean: bean,
-                    hideUploadFile: true,
-                  ),
+    final bool isDark = ref.watch(themeProvider).themeMode == modeDark;
+    final bool isPinned = (bean.isPinned ?? 0) == 1;
+    final Color primary = ref.watch(themeProvider).primaryColor;
+    final Color titleColor = ref.watch(themeProvider).themeColor.titleColor();
+    final Color descColor = ref.watch(themeProvider).themeColor.descColor();
+    final bool hasScript = bean.command != null && bean.command!.startsWith("task ");
+
+    Color cardBg;
+    if (isDark) {
+      cardBg = isPinned ? const Color(0xff22211d) : const Color(0xff18181f);
+    } else {
+      cardBg = isPinned ? const Color(0xfffffdf5) : Colors.white;
+    }
+
+    Color cardBorder;
+    if (isDark) {
+      cardBorder = isPinned ? const Color(0xfff59e0b).withOpacity(0.4) : const Color(0xff272733);
+    } else {
+      cardBorder = isPinned ? const Color(0xfff59e0b).withOpacity(0.35) : const Color(0xffe2e8f0);
+    }
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: cardBorder,
+          width: isPinned ? 1.2 : 0.8,
+        ),
+        boxShadow: isDark
+            ? []
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.025),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
                 ),
-              );
-            },
-            foregroundColor: Colors.white,
-            icon: CupertinoIcons.pencil_outline,
-          ),
-          SlidableAction(
-            backgroundColor: const Color(0xffF19A39),
-            onPressed: (_) {
-              WidgetsBinding.instance.endOfFrame.then((timeStamp) {
-                pinTask(context);
-              });
-            },
-            foregroundColor: Colors.white,
-            icon: (bean.isPinned ?? 0) == 0 ? CupertinoIcons.pin : CupertinoIcons.pin_slash,
-          ),
-          SlidableAction(
-            backgroundColor: const Color(0xffA356D6),
-            onPressed: (_) {
-              WidgetsBinding.instance.endOfFrame.then((timeStamp) {
-                enableTask(context);
-              });
-            },
-            foregroundColor: Colors.white,
-            icon: bean.isDisabled! == 0 ? Icons.dnd_forwardslash : Icons.check_circle_outline_sharp,
-          ),
-          SlidableAction(
-            backgroundColor: const Color(0xffEA4D3E),
-            onPressed: (_) {
-              WidgetsBinding.instance.endOfFrame.then((timeStamp) {
-                delTask(context, ref);
-              });
-            },
-            foregroundColor: Colors.white,
-            icon: CupertinoIcons.delete,
-          ),
-        ],
+              ],
       ),
-      startActionPane: ActionPane(
-        motion: const StretchMotion(),
-        extentRatio: 0.4,
-        children: [
-          SlidableAction(
-            backgroundColor: const Color(0xffD25535),
-            onPressed: (_) {
-              if (bean.status! == 1) {
-                startCron(
-                  context,
-                  ref,
-                  SpUtil.getBool(spAutoShowLog, defValue: true),
-                );
-              } else {
-                stopCron(
-                  context,
-                  ref,
-                );
-              }
-            },
-            foregroundColor: Colors.white,
-            icon: bean.status! == 1 ? CupertinoIcons.memories : CupertinoIcons.stop_circle,
-          ),
-          SlidableAction(
-            backgroundColor: const Color(0xff606467),
-            onPressed: (_) {
-              logCron(context, ref);
-            },
-            foregroundColor: Colors.white,
-            icon: CupertinoIcons.text_justifyleft,
-          ),
-        ],
-      ),
-      child: Material(
-        color: bean.isPinned == 1
-            ? ref.watch(themeProvider).themeColor.pinColor()
-            : ref.watch(themeProvider).themeColor.settingBgColor(),
-        child: InkWell(
-          onTap: () {
-            if (editMode) {
-              checkedCallback(bean.sId ?? "");
-            } else {
-              Navigator.of(context).pushNamed(Routes.routeTaskDetail, arguments: bean);
-            }
-          },
-          child: Row(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Slidable(
+          enabled: !editMode,
+          key: ValueKey(bean.sId),
+          endActionPane: ActionPane(
+            motion: const StretchMotion(),
+            extentRatio: 0.75,
             children: [
-              AnimatedSize(
-                duration: const Duration(milliseconds: 250),
-                child: SizedBox(
-                  width: editMode ? 40 : 0,
-                  height: 40,
-                  child: Visibility(
-                    visible: editMode,
-                    child: Padding(
-                      padding: const EdgeInsets.only(
-                        left: 15,
-                      ),
-                      child: Icon(
-                        checked ? CupertinoIcons.checkmark_alt_circle : CupertinoIcons.circle,
-                        size: 25,
-                        color: checked
-                            ? ref.watch(themeProvider).primaryColor
-                            : ref.watch(themeProvider).themeColor.descColor(),
+              SlidableAction(
+                backgroundColor: const Color(0xff5D5E70),
+                onPressed: (_) {
+                  Navigator.of(context).push(
+                    CupertinoPageRoute(
+                      builder: (context) => AddTaskPage(
+                        taskBean: bean,
+                        hideUploadFile: true,
                       ),
                     ),
-                  ),
-                ),
+                  );
+                },
+                foregroundColor: Colors.white,
+                icon: CupertinoIcons.pencil_outline,
               ),
-              Expanded(
-                child: Container(
-                  color: Colors.transparent,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 15,
-                    vertical: 8,
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
+              SlidableAction(
+                backgroundColor: const Color(0xffF19A39),
+                onPressed: (_) {
+                  WidgetsBinding.instance.endOfFrame.then((timeStamp) {
+                    pinTask(context);
+                  });
+                },
+                foregroundColor: Colors.white,
+                icon: (bean.isPinned ?? 0) == 0 ? CupertinoIcons.pin : CupertinoIcons.pin_slash,
+              ),
+              SlidableAction(
+                backgroundColor: const Color(0xffA356D6),
+                onPressed: (_) {
+                  WidgetsBinding.instance.endOfFrame.then((timeStamp) {
+                    enableTask(context);
+                  });
+                },
+                foregroundColor: Colors.white,
+                icon: bean.isDisabled! == 0 ? Icons.dnd_forwardslash : Icons.check_circle_outline_sharp,
+              ),
+              SlidableAction(
+                backgroundColor: const Color(0xffEA4D3E),
+                onPressed: (_) {
+                  WidgetsBinding.instance.endOfFrame.then((timeStamp) {
+                    delTask(context, ref);
+                  });
+                },
+                foregroundColor: Colors.white,
+                icon: CupertinoIcons.delete,
+              ),
+            ],
+          ),
+          startActionPane: ActionPane(
+            motion: const StretchMotion(),
+            extentRatio: hasScript ? 0.6 : 0.4,
+            children: [
+              SlidableAction(
+                backgroundColor: const Color(0xff10B981),
+                onPressed: (_) {
+                  if (bean.status! == 1) {
+                    startCron(
+                      context,
+                      ref,
+                      SpUtil.getBool(spAutoShowLog, defValue: true),
+                    );
+                  } else {
+                    stopCron(
+                      context,
+                      ref,
+                    );
+                  }
+                },
+                foregroundColor: Colors.white,
+                icon: bean.status! == 1 ? CupertinoIcons.play_circle : CupertinoIcons.stop_circle,
+              ),
+              SlidableAction(
+                backgroundColor: const Color(0xff6366F1),
+                onPressed: (_) {
+                  logCron(context, ref);
+                },
+                foregroundColor: Colors.white,
+                icon: CupertinoIcons.text_justifyleft,
+              ),
+              if (hasScript)
+                SlidableAction(
+                  backgroundColor: const Color(0xff0EA5E9),
+                  onPressed: (_) {
+                    openScript(context);
+                  },
+                  foregroundColor: Colors.white,
+                  icon: CupertinoIcons.doc_text,
+                ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () {
+                if (editMode) {
+                  checkedCallback(bean.sId ?? "");
+                } else {
+                  Navigator.of(context).pushNamed(Routes.routeTaskDetail, arguments: bean);
+                }
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    AnimatedSize(
+                      duration: const Duration(milliseconds: 250),
+                      child: SizedBox(
+                        width: editMode ? 36 : 0,
+                        child: Visibility(
+                          visible: editMode,
+                          child: Padding(
+                            padding: const EdgeInsets.only(right: 10),
+                            child: Icon(
+                              checked ? CupertinoIcons.checkmark_alt_circle_fill : CupertinoIcons.circle,
+                              size: 22,
+                              color: checked ? primary : descColor,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
+                          Row(
+                            children: [
+                              if (isPinned)
+                                const Padding(
+                                  padding: EdgeInsets.only(right: 5),
+                                  child: Icon(
+                                    CupertinoIcons.pin_fill,
+                                    size: 13,
+                                    color: Color(0xfff59e0b),
+                                  ),
+                                ),
+                              Expanded(
+                                child: Text(
+                                  bean.name ?? "",
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: titleColor,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              if (bean.status == 0) ...[
+                                const RunningWidget(),
+                                const SizedBox(width: 6),
+                              ],
+                              if (bean.isDisabled == 1) ...[
+                                const StatusWidget(
+                                  title: "已禁用",
+                                  color: Color(0xffef4444),
+                                ),
+                                const SizedBox(width: 6),
+                              ],
+                              Text(
+                                (bean.lastExecutionTime == null || bean.lastExecutionTime == 0)
+                                    ? "-"
+                                    : Utils.formatMessageTime(bean.lastExecutionTime!),
+                                maxLines: 1,
+                                style: TextStyle(
+                                  color: descColor,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: isDark ? const Color(0xff23232c) : const Color(0xfff1f5f9),
+                                  borderRadius: BorderRadius.circular(5),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      CupertinoIcons.clock,
+                                      size: 11,
+                                      color: primary,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      bean.schedule ?? "",
+                                      style: TextStyle(
+                                        fontFamily: 'monospace',
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w500,
+                                        color: isDark ? const Color(0xffcbd5e1) : const Color(0xff475569),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: isDark ? const Color(0xff121217) : const Color(0xfff8fafc),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: isDark ? const Color(0xff22222a) : const Color(0xffe2e8f0),
+                                width: 0.6,
+                              ),
+                            ),
                             child: Row(
-                              mainAxisSize: MainAxisSize.max,
-                              mainAxisAlignment: MainAxisAlignment.start,
                               children: [
-                                ConstrainedBox(
-                                  constraints: BoxConstraints.loose(
-                                    Size.fromWidth(
-                                      MediaQuery.of(context).size.width *
-                                          (((bean.isDisabled ?? 0) == 1) ? 0.45 : 0.55),
+                                Icon(
+                                  CupertinoIcons.terminal,
+                                  size: 12,
+                                  color: descColor,
+                                ),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    bean.command ?? "",
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontFamily: 'monospace',
+                                      fontSize: 11.5,
+                                      color: isDark ? const Color(0xff94a3b8) : const Color(0xff334155),
                                     ),
                                   ),
-                                  child: Material(
-                                    color: Colors.transparent,
-                                    child: Text(
-                                      bean.name ?? "",
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        overflow: TextOverflow.ellipsis,
-                                        color: ref.watch(themeProvider).themeColor.titleColor(),
-                                        fontSize: 17,
+                                ),
+                                if (hasScript) ...[
+                                  const SizedBox(width: 6),
+                                  GestureDetector(
+                                    onTap: () => openScript(context),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: primary.withOpacity(0.12),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            CupertinoIcons.doc_text,
+                                            size: 11,
+                                            color: primary,
+                                          ),
+                                          const SizedBox(width: 2),
+                                          Text(
+                                            "脚本",
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              color: primary,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ),
-                                ),
-                                SizedBox(
-                                  width: bean.status == 0 ? 7 : 0,
-                                ),
-                                bean.status == 0 ? const RunningWidget() : const SizedBox.shrink(),
-                                const SizedBox(
-                                  width: 7,
-                                ),
-                                bean.isDisabled == 1
-                                    ? const StatusWidget(
-                                        title: "已禁用",
-                                        color: Color(0xffFB5858),
-                                      )
-                                    : const SizedBox.shrink()
+                                ],
                               ],
-                            ),
-                          ),
-                          Material(
-                            color: Colors.transparent,
-                            child: Text(
-                              (bean.lastExecutionTime == null || bean.lastExecutionTime == 0)
-                                  ? "-"
-                                  : Utils.formatMessageTime(bean.lastExecutionTime!),
-                              maxLines: 1,
-                              style: TextStyle(
-                                overflow: TextOverflow.ellipsis,
-                                color: ref.watch(themeProvider).themeColor.descColor(),
-                                fontSize: 12,
-                              ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(
-                        height: 5,
-                      ),
-                      Material(
-                        color: Colors.transparent,
-                        child: Text(
-                          bean.schedule ?? "",
-                          maxLines: 1,
-                          style: TextStyle(
-                            overflow: TextOverflow.ellipsis,
-                            color: ref.watch(themeProvider).themeColor.descColor(),
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(
-                        height: 5,
-                      ),
-                      Material(
-                        color: Colors.transparent,
-                        child: Text(
-                          bean.command ?? "",
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            overflow: TextOverflow.ellipsis,
-                            color: ref.watch(themeProvider).themeColor.descColor(),
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
         ),
       ),

@@ -529,185 +529,179 @@ class EnvItemCell extends StatelessWidget {
           ),
         ],
       ),
-      child: SizedBox(
-        width: MediaQuery.of(context).size.width,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Material(
-              color: ref.watch(themeProvider).themeColor.settingBgColor(),
-              child: InkWell(
-                onTap: () {
-                  if (editMode) {
-                    checkedCallback(bean.sId ?? "");
-                  } else {
-                    Navigator.of(context).pushNamed(Routes.routeEnvDetail, arguments: bean);
-                  }
-                },
-                child: Row(
-                  children: [
-                    AnimatedSize(
-                      duration: const Duration(milliseconds: 250),
-                      child: SizedBox(
-                        width: editMode ? 40 : 0,
-                        height: 40,
-                        child: Visibility(
-                          visible: editMode,
-                          child: GestureDetector(
-                            child: Icon(
-                              checked ? CupertinoIcons.checkmark_alt_circle : CupertinoIcons.circle,
-                              size: 25,
-                              color: checked ? ref.watch(themeProvider).primaryColor : ref.watch(themeProvider).themeColor.descColor(),
-                            ),
-                          ),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        child: Material(
+          color: ref.watch(themeProvider).themeColor.settingBgColor(),
+          borderRadius: BorderRadius.circular(12),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: () {
+              if (editMode) {
+                checkedCallback(bean.sId ?? "");
+              } else {
+                Navigator.of(context).pushNamed(Routes.routeEnvDetail, arguments: bean);
+              }
+            },
+            child: Row(
+              children: [
+                AnimatedSize(
+                  duration: const Duration(milliseconds: 250),
+                  child: SizedBox(
+                    width: editMode ? 40 : 0,
+                    height: 40,
+                    child: Visibility(
+                      visible: editMode,
+                      child: GestureDetector(
+                        child: Icon(
+                          checked ? CupertinoIcons.checkmark_alt_circle : CupertinoIcons.circle,
+                          size: 25,
+                          color: checked ? ref.watch(themeProvider).primaryColor : ref.watch(themeProvider).themeColor.descColor(),
                         ),
                       ),
                     ),
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 15,
-                          vertical: 8,
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
+                  ),
+                ),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 15,
+                      vertical: 12,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
                           mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 5,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(3),
-                                          border: Border.all(color: ref.watch(themeProvider).themeColor.descColor(), width: 1),
-                                        ),
-                                        child: Text(
-                                          "${getIndexByIndex(context, index)}",
-                                          style: TextStyle(
-                                            color: ref.watch(themeProvider).themeColor.descColor(),
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(
-                                        width: 5,
-                                      ),
-                                      ConstrainedBox(
-                                        constraints: BoxConstraints.loose(
-                                          Size.fromWidth(
-                                            MediaQuery.of(context).size.width * 0.53,
-                                          ),
-                                        ),
-                                        child: RichText(
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          text: TextSpan(
-                                            text: bean.name ?? "",
-                                            style: TextStyle(
-                                              overflow: TextOverflow.ellipsis,
-                                              color: ref.watch(themeProvider).themeColor.titleColor(),
-                                              fontSize: 16,
-                                            ),
-                                            children: <TextSpan>[
-                                              TextSpan(
-                                                text: (bean.remarks == null || bean.remarks!.isEmpty) ? "" : "(${bean.remarks})",
-                                                style: TextStyle(
-                                                  overflow: TextOverflow.ellipsis,
-                                                  color: ref.watch(themeProvider).themeColor.descColor(),
-                                                  fontSize: 14,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(
-                                        width: 7,
-                                      ),
-                                      bean.status == 1
-                                          ? const StatusWidget(
-                                              title: "已禁用",
-                                              color: Color(0xffFB5858),
-                                            )
-                                          : StatusWidget(
-                                              title: "已启用",
-                                              color: ref.watch(themeProvider).primaryColor,
-                                            )
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(
-                                  width: 15,
-                                ),
-                                Visibility(
-                                  visible: !editMode2,
-                                  child: Material(
-                                    color: Colors.transparent,
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 5,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(4),
+                                      border: Border.all(color: ref.watch(themeProvider).themeColor.descColor().withOpacity(0.5), width: 1),
+                                    ),
                                     child: Text(
-                                      bean.updatedAt == null ? Utils.formatGMTTime(bean.timestamp ?? "") : Utils.formatTime2(bean.updatedAt),
-                                      maxLines: 1,
+                                      "${getIndexByIndex(context, index)}",
                                       style: TextStyle(
-                                        overflow: TextOverflow.ellipsis,
                                         color: ref.watch(themeProvider).themeColor.descColor(),
                                         fontSize: 12,
                                       ),
                                     ),
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(
+                                    width: 8,
+                                  ),
+                                  ConstrainedBox(
+                                    constraints: BoxConstraints.loose(
+                                      Size.fromWidth(
+                                        MediaQuery.of(context).size.width * 0.50,
+                                      ),
+                                    ),
+                                    child: RichText(
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      text: TextSpan(
+                                        text: bean.name ?? "",
+                                        style: TextStyle(
+                                          overflow: TextOverflow.ellipsis,
+                                          color: ref.watch(themeProvider).themeColor.titleColor(),
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                        children: <TextSpan>[
+                                          TextSpan(
+                                            text: (bean.remarks == null || bean.remarks!.isEmpty) ? "" : " (${bean.remarks})",
+                                            style: TextStyle(
+                                              overflow: TextOverflow.ellipsis,
+                                              color: ref.watch(themeProvider).themeColor.descColor(),
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.normal,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(
+                                    width: 8,
+                                  ),
+                                  bean.status == 1
+                                      ? const StatusWidget(
+                                          title: "已禁用",
+                                          color: Color(0xffEF4444),
+                                        )
+                                      : StatusWidget(
+                                          title: "已启用",
+                                          color: ref.watch(themeProvider).primaryColor,
+                                        )
+                                ],
+                              ),
                             ),
                             const SizedBox(
-                              height: 15,
+                              width: 10,
                             ),
-                            Material(
-                              color: Colors.transparent,
-                              child: Text(
-                                bean.value ?? "",
-                                maxLines: 1,
-                                style: TextStyle(
-                                  overflow: TextOverflow.ellipsis,
-                                  color: ref.watch(themeProvider).themeColor.descColor(),
-                                  fontSize: 12,
+                            Visibility(
+                              visible: !editMode2,
+                              child: Material(
+                                color: Colors.transparent,
+                                child: Text(
+                                  bean.updatedAt == null ? Utils.formatGMTTime(bean.timestamp ?? "") : Utils.formatTime2(bean.updatedAt),
+                                  maxLines: 1,
+                                  style: TextStyle(
+                                    overflow: TextOverflow.ellipsis,
+                                    color: ref.watch(themeProvider).themeColor.descColor(),
+                                    fontSize: 12,
+                                  ),
                                 ),
                               ),
                             ),
                           ],
                         ),
-                      ),
-                    ),
-                    Visibility(
-                      visible: editMode2,
-                      child: const IgnorePointer(
-                        ignoring: true,
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 15,
-                          ),
-                          child: Icon(
-                            CupertinoIcons.line_horizontal_3,
-                            color: Color(0xff999999),
-                            size: 20,
+                        const SizedBox(
+                          height: 8,
+                        ),
+                        Material(
+                          color: Colors.transparent,
+                          child: Text(
+                            bean.value ?? "",
+                            maxLines: 2,
+                            style: TextStyle(
+                              overflow: TextOverflow.ellipsis,
+                              color: ref.watch(themeProvider).themeColor.descColor(),
+                              fontSize: 13,
+                            ),
                           ),
                         ),
+                      ],
+                    ),
+                  ),
+                ),
+                Visibility(
+                  visible: editMode2,
+                  child: const IgnorePointer(
+                    ignoring: true,
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 15,
+                      ),
+                      child: Icon(
+                        CupertinoIcons.line_horizontal_3,
+                        color: Color(0xff999999),
+                        size: 20,
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
-            const Divider(
-              height: 1,
-              indent: 15,
-            ),
-          ],
+          ),
         ),
       ),
     );

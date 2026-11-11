@@ -162,21 +162,7 @@ class _SubscribePageState extends ConsumerState<SubscribePage> {
             },
             itemCount: list.length + 1,
             separatorBuilder: (BuildContext context, int index) {
-              if (index == 0) return const SizedBox.shrink();
-              Map<String, dynamic> item = list[index - 1];
-              if (searchText.text.isEmpty ||
-                  (item["name"]?.toLowerCase().contains(searchText.text.toLowerCase()) ?? false) ||
-                  (item["url"]?.toLowerCase().contains(searchText.text.toLowerCase()) ?? false)) {
-                return Container(
-                  color: ref.watch(themeProvider).themeColor.settingBgColor(),
-                  child: const Divider(
-                    height: 1,
-                    indent: 15,
-                  ),
-                );
-              } else {
-                return const SizedBox.shrink();
-              }
+              return const SizedBox(height: 2);
             },
           ),
         ),
@@ -223,8 +209,8 @@ class TaskItemCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ColoredBox(
-      color: ref.watch(themeProvider).themeColor.settingBgColor(),
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: Slidable(
         key: ValueKey(bean["id"] as int),
         endActionPane: ActionPane(
@@ -321,6 +307,8 @@ class TaskItemCell extends StatelessWidget {
         ),
         child: Material(
           color: ref.watch(themeProvider).themeColor.settingBgColor(),
+          borderRadius: BorderRadius.circular(12),
+          clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: () {
               Navigator.of(context).pushNamed(Routes.routeSubscribeDetail, arguments: bean);
@@ -330,7 +318,7 @@ class TaskItemCell extends StatelessWidget {
               color: Colors.transparent,
               padding: const EdgeInsets.symmetric(
                 horizontal: 15,
-                vertical: 8,
+                vertical: 12,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -361,18 +349,19 @@ class TaskItemCell extends StatelessWidget {
                                     overflow: TextOverflow.ellipsis,
                                     color: ref.watch(themeProvider).themeColor.titleColor(),
                                     fontSize: 16,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ),
                             ),
                             const SizedBox(
-                              width: 7,
+                              width: 8,
                             ),
                             bean["status"] == 0 ? const RunningWidget() : const SizedBox.shrink(),
                             const SizedBox(
-                              width: 7,
+                              width: 8,
                             ),
-                            (bean["is_disabled"] ?? 0) == 1 ? const StatusWidget(title: "已禁用", color: Color(0xffFB5858)) : const SizedBox.shrink()
+                            (bean["is_disabled"] ?? 0) == 1 ? const StatusWidget(title: "已禁用", color: Color(0xffEF4444)) : const SizedBox.shrink()
                           ],
                         ),
                       ),

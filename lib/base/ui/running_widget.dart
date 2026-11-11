@@ -11,33 +11,36 @@ class RunningWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
+    final Color primary = ref.watch(themeProvider).primaryColor;
     return Container(
       decoration: BoxDecoration(
-        color: ref.watch(themeProvider).primaryColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(2),
+        color: primary.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: ref.watch(themeProvider).primaryColor,
-          width: 1,
+          color: primary.withOpacity(0.4),
+          width: 0.8,
         ),
       ),
       padding: const EdgeInsets.symmetric(
-        horizontal: 3,
+        horizontal: 6,
+        vertical: 2,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           LoadingWidget(
-            color: ref.watch(themeProvider).primaryColor,
-            size: 12,
+            color: primary,
+            size: 11,
           ),
           const SizedBox(
-            width: 3,
+            width: 4,
           ),
           Text(
             "运行中",
             style: TextStyle(
-              color: ref.watch(themeProvider).primaryColor,
-              fontSize: 9,
+              color: primary,
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],

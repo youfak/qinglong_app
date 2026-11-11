@@ -119,26 +119,14 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> with LazyLoadSt
                             size: 16,
                             color: ref.watch(themeProvider).themeColor.descColor(),
                           ),
-                          desc: widget.taskBean.command?.replaceAll("task ", "") ?? "-",
+                          desc: widget.taskBean.command?.replaceFirst(RegExp(r'^task\s+'), '').trim() ?? "-",
                           taped: () {
-                            if (widget.taskBean.command == null || widget.taskBean.command!.isEmpty) return;
-                            if (!(widget.taskBean.command?.startsWith("task ") ?? true)) return;
-
-                            String path = widget.taskBean.command?.replaceAll("task ", "").trim() ?? "";
-
-                            if (!path.contains("/")) {
+                            var info = ScriptPathInfo.parse(widget.taskBean.command);
+                            if (info.title.isNotEmpty) {
                               Navigator.of(context).pushNamed(Routes.routeScriptDetail, arguments: {
-                                "title": path.trim(),
-                                "path": "",
+                                "title": info.title,
+                                "path": info.path,
                               });
-                            } else {
-                              List<String> paths = path.split("/");
-                              if (paths.length == 2) {
-                                Navigator.of(context).pushNamed(Routes.routeScriptDetail, arguments: {
-                                  "title": paths[1],
-                                  "path": paths[0],
-                                });
-                              }
                             }
                           },
                         ),
@@ -469,59 +457,66 @@ class TaskDetailCell extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(
-            top: 10,
-            left: 15,
-            bottom: 10,
-          ),
-          child: Row(
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  color: ref.watch(themeProvider).themeColor.titleColor(),
-                  fontSize: 16,
+        InkWell(
+          onTap: taped != null
+              ? () {
+                  taped!();
+                }
+              : null,
+          child: Padding(
+            padding: const EdgeInsets.only(
+              top: 10,
+              left: 15,
+              bottom: 10,
+            ),
+            child: Row(
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: ref.watch(themeProvider).themeColor.titleColor(),
+                    fontSize: 16,
+                  ),
                 ),
-              ),
-              const SizedBox(
-                width: 30,
-              ),
-              desc != null
-                  ? Expanded(
-                      child: Align(
-                        alignment: left ? Alignment.centerLeft : Alignment.centerRight,
-                        child: SelectableText(
-                          desc!,
-                          selectionHeightStyle: BoxHeightStyle.max,
-                          selectionWidthStyle: BoxWidthStyle.max,
-                          onTap: () {
-                            if (taped != null) {
-                              taped!();
-                            }
-                          },
-                          style: TextStyle(
-                            color: ref.watch(themeProvider).themeColor.descColor(),
-                            fontSize: 16,
+                const SizedBox(
+                  width: 30,
+                ),
+                desc != null
+                    ? Expanded(
+                        child: Align(
+                          alignment: left ? Alignment.centerLeft : Alignment.centerRight,
+                          child: SelectableText(
+                            desc!,
+                            selectionHeightStyle: BoxHeightStyle.max,
+                            selectionWidthStyle: BoxWidthStyle.max,
+                            onTap: () {
+                              if (taped != null) {
+                                taped!();
+                              }
+                            },
+                            style: TextStyle(
+                              color: ref.watch(themeProvider).themeColor.descColor(),
+                              fontSize: 16,
+                            ),
                           ),
                         ),
+                      )
+                    : Expanded(
+                        child: Align(alignment: Alignment.centerRight, child: icon!),
                       ),
-                    )
-                  : Expanded(
-                      child: Align(alignment: Alignment.centerRight, child: icon!),
-                    ),
-              suffixIcon == null
-                  ? const SizedBox.shrink()
-                  : Padding(
-                      padding: const EdgeInsets.only(
-                        left: 15,
+                suffixIcon == null
+                    ? const SizedBox.shrink()
+                    : Padding(
+                        padding: const EdgeInsets.only(
+                          left: 15,
+                        ),
+                        child: suffixIcon!,
                       ),
-                      child: suffixIcon!,
-                    ),
-              const SizedBox(
-                width: 15,
-              ),
-            ],
+                const SizedBox(
+                  width: 15,
+                ),
+              ],
+            ),
           ),
         ),
         hideDivide

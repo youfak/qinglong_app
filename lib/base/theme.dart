@@ -11,13 +11,13 @@ import 'package:qinglong_app/utils/sp_utils.dart';
 
 var themeProvider = ChangeNotifierProvider((ref) => ThemeViewModel());
 
-Color whiteColor = const Color(0xfff1f1f1);
+Color whiteColor = const Color(0xfff8fafc);
 
 int modeDark = 2;
 int modeLight = 0;
 int modeWhite = 1;
 
-Color _primaryColor = const Color(0xFF20b54f);
+Color _primaryColor = const Color(0xFF10B981);
 // Color _primaryColor = Colors.redAccent;
 
 class ThemeViewModel extends ChangeNotifier {
@@ -88,6 +88,7 @@ class ThemeViewModel extends ChangeNotifier {
 
   ThemeData getWhiteTheme() {
     return ThemeData.light().copyWith(
+      useMaterial3: true,
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
           TargetPlatform.android: CupertinoPageTransitionsBuilder(),
@@ -100,6 +101,19 @@ class ThemeViewModel extends ChangeNotifier {
       colorScheme: ColorScheme.light(
         secondary: _primaryColor,
         primary: _primaryColor,
+        surface: Colors.white,
+        background: const Color(0xffF8FAFC),
+      ),
+      cardTheme: CardTheme(
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+      dialogTheme: DialogTheme(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
       ),
       floatingActionButtonTheme: const FloatingActionButtonThemeData().copyWith(
         backgroundColor: Colors.white,
@@ -108,7 +122,7 @@ class ThemeViewModel extends ChangeNotifier {
       inputDecorationTheme: InputDecorationTheme(
         hintStyle: const TextStyle(
           fontSize: 14,
-          color: Color(0xffBBBBBB),
+          color: Color(0xff94A3B8),
         ),
         labelStyle: TextStyle(
           color: _primaryColor,
@@ -116,32 +130,32 @@ class ThemeViewModel extends ChangeNotifier {
         ),
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 10,
-          vertical: 8,
+          horizontal: 12,
+          vertical: 10,
         ),
         focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: primaryColor, width: 1),
-          borderRadius: BorderRadius.circular(4),
+          borderSide: BorderSide(color: primaryColor, width: 1.5),
+          borderRadius: BorderRadius.circular(10),
         ),
         enabledBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: Color(0xffe4e4e4), width: 1),
-          borderRadius: BorderRadius.circular(4),
+          borderSide: const BorderSide(color: Color(0xffE2E8F0), width: 1),
+          borderRadius: BorderRadius.circular(10),
         ),
         disabledBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: Color(0xffe4e4e4), width: 1),
-          borderRadius: BorderRadius.circular(4),
+          borderSide: const BorderSide(color: Color(0xffE2E8F0), width: 1),
+          borderRadius: BorderRadius.circular(10),
         ),
         border: OutlineInputBorder(
-          borderSide: const BorderSide(color: Color(0xffe4e4e4), width: 1),
-          borderRadius: BorderRadius.circular(4),
+          borderSide: const BorderSide(color: Color(0xffE2E8F0), width: 1),
+          borderRadius: BorderRadius.circular(10),
         ),
       ),
       appBarTheme: AppBarTheme(
         elevation: 0,
         backgroundColor: whiteColor,
         titleTextStyle: const TextStyle(
-          color: Color(0xff333333),
-          fontSize: 16,
+          color: Color(0xff1E293B),
+          fontSize: 17,
           fontWeight: FontWeight.w600,
         ),
         toolbarTextStyle: TextStyle(
@@ -168,17 +182,18 @@ class ThemeViewModel extends ChangeNotifier {
       tabBarTheme: TabBarTheme(
         labelStyle: const TextStyle(
           fontSize: 14,
+          fontWeight: FontWeight.w600,
         ),
         unselectedLabelStyle: const TextStyle(
           fontSize: 14,
         ),
         labelColor: _primaryColor,
-        unselectedLabelColor: const Color(0xff999999),
+        unselectedLabelColor: const Color(0xff94A3B8),
         indicator: UnderlineTabIndicator(
-          borderSide: BorderSide(color: _primaryColor),
+          borderSide: BorderSide(color: _primaryColor, width: 2),
         ),
       ),
-      hintColor: const Color(0xffBBBBBB),
+      hintColor: const Color(0xff94A3B8),
       toggleableActiveColor: _primaryColor,
       checkboxTheme: CheckboxThemeData(
         checkColor: MaterialStateProperty.resolveWith(
@@ -196,13 +211,14 @@ class ThemeViewModel extends ChangeNotifier {
       cupertinoOverrideTheme: NoDefaultCupertinoThemeData(
         brightness: Brightness.light,
         primaryColor: _primaryColor,
-        scaffoldBackgroundColor: const Color(0xfff5f5f5),
+        scaffoldBackgroundColor: const Color(0xfff8fafc),
       ),
     );
   }
 
   ThemeData getLightTheme() {
     return ThemeData.light().copyWith(
+      useMaterial3: true,
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
           TargetPlatform.android: CupertinoPageTransitionsBuilder(),
@@ -215,6 +231,19 @@ class ThemeViewModel extends ChangeNotifier {
       colorScheme: ColorScheme.light(
         secondary: _primaryColor,
         primary: _primaryColor,
+        surface: Colors.white,
+        background: const Color(0xffF8FAFC),
+      ),
+      cardTheme: CardTheme(
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+      dialogTheme: DialogTheme(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
       ),
       floatingActionButtonTheme: const FloatingActionButtonThemeData().copyWith(
         backgroundColor: Colors.white,
@@ -223,34 +252,32 @@ class ThemeViewModel extends ChangeNotifier {
       inputDecorationTheme: InputDecorationTheme(
         hintStyle: const TextStyle(
           fontSize: 14,
-          color: Color(0xffBBBBBB),
+          color: Color(0xff94A3B8),
         ),
         labelStyle: TextStyle(
           color: _primaryColor,
           fontSize: 14,
         ),
         isDense: true,
-        contentPadding: const EdgeInsets.only(
-          left: 10,
-          right: 10,
-          top: 8,
-          bottom: 8,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 10,
         ),
         focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: primaryColor, width: 1),
-          borderRadius: BorderRadius.circular(4),
+          borderSide: BorderSide(color: primaryColor, width: 1.5),
+          borderRadius: BorderRadius.circular(10),
         ),
         enabledBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: Color(0xffe4e4e4), width: 1),
-          borderRadius: BorderRadius.circular(4),
+          borderSide: const BorderSide(color: Color(0xffE2E8F0), width: 1),
+          borderRadius: BorderRadius.circular(10),
         ),
         disabledBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: Color(0xffe4e4e4), width: 1),
-          borderRadius: BorderRadius.circular(4),
+          borderSide: const BorderSide(color: Color(0xffE2E8F0), width: 1),
+          borderRadius: BorderRadius.circular(10),
         ),
         border: OutlineInputBorder(
-          borderSide: const BorderSide(color: Color(0xffe4e4e4), width: 1),
-          borderRadius: BorderRadius.circular(4),
+          borderSide: const BorderSide(color: Color(0xffE2E8F0), width: 1),
+          borderRadius: BorderRadius.circular(10),
         ),
       ),
       appBarTheme: const AppBarTheme(
@@ -258,7 +285,7 @@ class ThemeViewModel extends ChangeNotifier {
         backgroundColor: Colors.transparent,
         titleTextStyle: TextStyle(
           color: Colors.white,
-          fontSize: 16,
+          fontSize: 17,
           fontWeight: FontWeight.w600,
         ),
         toolbarTextStyle: TextStyle(
@@ -285,17 +312,18 @@ class ThemeViewModel extends ChangeNotifier {
       tabBarTheme: TabBarTheme(
         labelStyle: const TextStyle(
           fontSize: 14,
+          fontWeight: FontWeight.w600,
         ),
         unselectedLabelStyle: const TextStyle(
           fontSize: 14,
         ),
         labelColor: _primaryColor,
-        unselectedLabelColor: const Color(0xff999999),
+        unselectedLabelColor: const Color(0xff94A3B8),
         indicator: UnderlineTabIndicator(
-          borderSide: BorderSide(color: _primaryColor),
+          borderSide: BorderSide(color: _primaryColor, width: 2),
         ),
       ),
-      hintColor: const Color(0xffBBBBBB),
+      hintColor: const Color(0xff94A3B8),
       toggleableActiveColor: _primaryColor,
       checkboxTheme: CheckboxThemeData(
         checkColor: MaterialStateProperty.resolveWith(
@@ -313,13 +341,14 @@ class ThemeViewModel extends ChangeNotifier {
       cupertinoOverrideTheme: NoDefaultCupertinoThemeData(
         brightness: Brightness.light,
         primaryColor: _primaryColor,
-        scaffoldBackgroundColor: const Color(0xfff5f5f5),
+        scaffoldBackgroundColor: const Color(0xfff8fafc),
       ),
     );
   }
 
   ThemeData getDartTheme() {
     return ThemeData.dark().copyWith(
+      useMaterial3: true,
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
           TargetPlatform.android: CupertinoPageTransitionsBuilder(),
@@ -327,10 +356,23 @@ class ThemeViewModel extends ChangeNotifier {
         },
       ),
       splashColor: Colors.transparent,
-      dividerColor: const Color(0xff242424),
-      canvasColor: const Color(0xff242424),
+      dividerColor: const Color(0xff262626),
+      canvasColor: const Color(0xff1E1E1E),
       dividerTheme: const DividerThemeData(
-        color: Color(0xff242424),
+        color: Color(0xff262626),
+      ),
+      cardTheme: CardTheme(
+        elevation: 0,
+        color: const Color(0xff1E1E1E),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+      dialogTheme: DialogTheme(
+        backgroundColor: const Color(0xff1E1E1E),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
       ),
       floatingActionButtonTheme: const FloatingActionButtonThemeData().copyWith(
         backgroundColor: Colors.white,
@@ -343,7 +385,7 @@ class ThemeViewModel extends ChangeNotifier {
         backgroundColor: const Color(0xff111111),
         titleTextStyle: const TextStyle(
           color: Color(0xffffffff),
-          fontSize: 16,
+          fontSize: 17,
           fontWeight: FontWeight.w600,
         ),
         toolbarTextStyle: TextStyle(
@@ -361,11 +403,11 @@ class ThemeViewModel extends ChangeNotifier {
         backgroundColor: const Color(0x991B1B1B),
         elevation: 0,
       ),
-      hintColor: const Color(0xffBBBBBB),
+      hintColor: const Color(0xff71717A),
       inputDecorationTheme: InputDecorationTheme(
         hintStyle: const TextStyle(
           fontSize: 14,
-          color: Color(0xffBBBBBB),
+          color: Color(0xff71717A),
         ),
         labelStyle: TextStyle(
           color: _primaryColor,
@@ -373,39 +415,42 @@ class ThemeViewModel extends ChangeNotifier {
         ),
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 10,
-          vertical: 8,
+          horizontal: 12,
+          vertical: 10,
         ),
         focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: primaryColor, width: 1),
-          borderRadius: BorderRadius.circular(4),
+          borderSide: BorderSide(color: primaryColor, width: 1.5),
+          borderRadius: BorderRadius.circular(10),
         ),
         enabledBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: Color(0xff999999), width: 1),
-          borderRadius: BorderRadius.circular(4),
+          borderSide: const BorderSide(color: Color(0xff3F3F46), width: 1),
+          borderRadius: BorderRadius.circular(10),
         ),
         disabledBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: Color(0xff999999), width: 1),
-          borderRadius: BorderRadius.circular(4),
+          borderSide: const BorderSide(color: Color(0xff3F3F46), width: 1),
+          borderRadius: BorderRadius.circular(10),
         ),
         border: OutlineInputBorder(
-          borderSide: const BorderSide(color: Color(0xff999999), width: 1),
-          borderRadius: BorderRadius.circular(4),
+          borderSide: const BorderSide(color: Color(0xff3F3F46), width: 1),
+          borderRadius: BorderRadius.circular(10),
         ),
       ),
       tabBarTheme: const TabBarTheme(
         labelStyle: TextStyle(
           fontSize: 14,
+          fontWeight: FontWeight.w600,
         ),
         unselectedLabelStyle: TextStyle(
           fontSize: 14,
         ),
         labelColor: Color(0xffffffff),
-        unselectedLabelColor: Color(0xff999999),
+        unselectedLabelColor: Color(0xff71717A),
       ),
-      colorScheme: ColorScheme.light(
+      colorScheme: ColorScheme.dark(
         secondary: _primaryColor,
         primary: _primaryColor,
+        surface: const Color(0xff1E1E1E),
+        background: const Color(0xff111111),
       ),
       toggleableActiveColor: _primaryColor,
       checkboxTheme: CheckboxThemeData(
@@ -473,7 +518,7 @@ abstract class ThemeColors {
 class LightThemeColors extends ThemeColors {
   @override
   Color titleColor() {
-    return const Color(0xff1A1A1A);
+    return const Color(0xff0f172a);
   }
 
   @override
@@ -488,7 +533,7 @@ class LightThemeColors extends ThemeColors {
 
   @override
   Color descColor() {
-    return const Color(0xffB3B3B3);
+    return const Color(0xff64748b);
   }
 
   @override
@@ -503,19 +548,19 @@ class LightThemeColors extends ThemeColors {
 
   @override
   Color settingBordorColor() {
-    return Colors.white;
+    return const Color(0xffe2e8f0);
   }
 
   @override
   Color tabBarColor() {
-    return const Color(0xffF7F7F7);
+    return Colors.white;
   }
 
   @override
   List<Color> appBarBg() {
     return [
-      const Color(0xff5DD16F),
-      const Color(0xff099657),
+      const Color(0xff10b981),
+      const Color(0xff059669),
     ];
   }
 
@@ -526,17 +571,17 @@ class LightThemeColors extends ThemeColors {
 
   @override
   Color filterColor() {
-    return const Color(0xff666666);
+    return const Color(0xff475569);
   }
 
   @override
   Color title2Color() {
-    return const Color(0xff1A1A1A);
+    return const Color(0xff1e293b);
   }
 
   @override
   Color hintColor() {
-    return const Color(0xffBBBBBB);
+    return const Color(0xff94a3b8);
   }
 
   @override
@@ -573,7 +618,7 @@ class LightThemeColors extends ThemeColors {
 class WhiteThemeColors extends ThemeColors {
   @override
   Color titleColor() {
-    return const Color(0xff1A1A1A);
+    return const Color(0xff0f172a);
   }
 
   @override
@@ -603,7 +648,7 @@ class WhiteThemeColors extends ThemeColors {
 
   @override
   Color descColor() {
-    return const Color(0xffB3B3B3);
+    return const Color(0xff64748b);
   }
 
   @override
@@ -623,19 +668,19 @@ class WhiteThemeColors extends ThemeColors {
 
   @override
   Color settingBordorColor() {
-    return Colors.white;
+    return const Color(0xffe2e8f0);
   }
 
   @override
   Color tabBarColor() {
-    return const Color(0xffF7F7F7);
+    return Colors.white;
   }
 
   @override
   List<Color> appBarBg() {
     return [
-      const Color(0xff5DD16F),
-      const Color(0xff099657),
+      const Color(0xff10b981),
+      const Color(0xff059669),
     ];
   }
 
@@ -646,17 +691,17 @@ class WhiteThemeColors extends ThemeColors {
 
   @override
   Color filterColor() {
-    return const Color(0xff666666);
+    return const Color(0xff475569);
   }
 
   @override
   Color title2Color() {
-    return const Color(0xff1A1A1A);
+    return const Color(0xff1e293b);
   }
 
   @override
   Color hintColor() {
-    return const Color(0xffBBBBBB);
+    return const Color(0xff94a3b8);
   }
 
   @override
@@ -666,24 +711,24 @@ class WhiteThemeColors extends ThemeColors {
 
   @override
   Color segmentedUnCheckBg() {
-    return Color(0xffF0F0F0);
+    return const Color(0xffF0F0F0);
   }
 }
 
 class DartThemeColors extends ThemeColors {
   @override
   Color hintColor() {
-    return const Color(0xffBBBBBB);
+    return const Color(0xff64748b);
   }
 
   @override
   Color title2Color() {
-    return const Color(0xffffffff);
+    return const Color(0xfff1f5f9);
   }
 
   @override
   Color filterColor() {
-    return const Color(0xffffffff);
+    return const Color(0xfff8fafc);
   }
 
   @override
@@ -693,17 +738,17 @@ class DartThemeColors extends ThemeColors {
 
   @override
   Color blackAndWhite() {
-    return const Color(0xff111111);
+    return const Color(0xff18181f);
   }
 
   @override
   Color titleColor() {
-    return Colors.white;
+    return const Color(0xfff8fafc);
   }
 
   @override
   Color pinColor() {
-    return const Color(0xff202020);
+    return const Color(0xff22222a);
   }
 
   @override
@@ -713,42 +758,42 @@ class DartThemeColors extends ThemeColors {
 
   @override
   Color descColor() {
-    return const Color(0xffB3B3B3);
+    return const Color(0xff94a3b8);
   }
 
   @override
   Color settingBgColor() {
-    return const Color(0xff111111);
+    return const Color(0xff18181f);
   }
 
   @override
   Color buttonBgColor() {
-    return const Color(0xff333333);
+    return const Color(0xff272733);
   }
 
   @override
   Color settingBordorColor() {
-    return const Color(0xff333333);
+    return const Color(0xff272733);
   }
 
   @override
   Color tabBarColor() {
-    return const Color(0xff111111);
+    return const Color(0xff18181f);
   }
 
   @override
   List<Color> appBarBg() {
-    return [const Color(0xff111111)];
+    return [const Color(0xff18181f)];
   }
 
   @override
   Color searchBgColor() {
-    return const Color(0xff111111);
+    return const Color(0xff18181f);
   }
 
   @override
   Color bg2Color() {
-    return const Color(0xff111111);
+    return const Color(0xff121217);
   }
 
   @override
@@ -758,11 +803,11 @@ class DartThemeColors extends ThemeColors {
 
   @override
   Color segmentedUnCheckBg() {
-    return const Color(0xff333333);
+    return const Color(0xff272733);
   }
 
   @override
   Color codeBgColor() {
-    return Color(0xff000000);
+    return const Color(0xff0f1117);
   }
 }

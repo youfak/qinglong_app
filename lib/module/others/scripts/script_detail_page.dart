@@ -115,7 +115,7 @@ class _ScriptDetailPageState extends ConsumerState<ScriptDetailPage> with LazyLo
               Routes.routeScriptUpdate,
               arguments: {
                 "title": widget.title,
-                "path": widget.path,
+                "path": widget.path ?? "",
                 "content": content,
               },
             ).then((value) {

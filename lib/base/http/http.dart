@@ -81,6 +81,35 @@ class Http {
     }
   }
 
+  Future<HttpResponse<String>> getScriptContent(
+    String uri,
+    Map<String, String?>? query,
+  ) async {
+    try {
+      _init();
+      var response = await _dio!.get(uri, queryParameters: query);
+      if (response.statusCode == 200) {
+        if (response.data is Map) {
+          int code = response.data["code"] ?? 0;
+          if (code == 200 || response.data["data"] != null) {
+            dynamic data = response.data["data"];
+            if (data is Map) {
+              String content = (data["value"] ?? data["content"] ?? data["data"] ?? "").toString();
+              return HttpResponse<String>(success: true, code: 200, bean: content);
+            } else if (data is String) {
+              return HttpResponse<String>(success: true, code: 200, bean: data);
+            }
+          }
+        } else if (response.data is String) {
+          return HttpResponse<String>(success: true, code: 200, bean: response.data as String);
+        }
+      }
+      return decodeResponse<String>(response, "data", true);
+    } on DioError catch (e) {
+      return exceptionHandler<String>(e, uri);
+    }
+  }
+
   Future<HttpResponse<T>> post<T>(
     String uri,
     dynamic json, {

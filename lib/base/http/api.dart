@@ -436,58 +436,172 @@ class Api {
     );
   }
 
-  Future<HttpResponse<NullResponse>> updateScript(String name, String path, String content) async {
+  String _cleanPath(String? p) {
+    if (p == null) return "";
+    String s = p.trim().replaceAll('\\', '/');
+    if (s.startsWith('/ql/data/scripts/')) {
+      s = s.substring('/ql/data/scripts/'.length);
+    } else if (s.startsWith('/ql/scripts/')) {
+      s = s.substring('/ql/scripts/'.length);
+    } else if (s.startsWith('ql/data/scripts/')) {
+      s = s.substring('ql/data/scripts/'.length);
+    } else if (s.startsWith('ql/scripts/')) {
+      s = s.substring('ql/scripts/'.length);
+    }
+    while (s.startsWith('./') || s.startsWith('/')) {
+      if (s.startsWith('./')) {
+        s = s.substring(2);
+      } else if (s.startsWith('/')) {
+        s = s.substring(1);
+      }
+    }
+    while (s.endsWith('/')) {
+      s = s.substring(0, s.length - 1);
+    }
+    return s.trim();
+  }
+
+  String _cleanFileName(String name) {
+    String n = name.trim().replaceAll('\\', '/');
+    while (n.startsWith('/')) {
+      n = n.substring(1);
+    }
+    return n;
+  }
+
+  Future<HttpResponse<NullResponse>> updateScript(String name, String? path, String content) async {
+    String safePath = _cleanPath(path);
+    String safeName = _cleanFileName(name);
+
     return await getIt<Http>(instanceName: index.toString()).put<NullResponse>(
       getIt<Url>(instanceName: index.toString()).scriptDetail,
       {
-        "filename": name,
-        "path": path,
+        "filename": safeName,
+        "path": safePath,
         "content": content,
       },
     );
   }
 
-  Future<HttpResponse<NullResponse>> delScript(String name, String path) async {
+  Future<HttpResponse<NullResponse>> delScript(String name, String? path) async {
+    String safePath = _cleanPath(path);
+    String safeName = _cleanFileName(name);
+
     return await getIt<Http>(instanceName: index.toString()).delete<NullResponse>(
       getIt<Url>(instanceName: index.toString()).scriptDetail,
       {
-        "filename": name,
-        "path": path,
+        "filename": safeName,
+        "path": safePath,
       },
     );
   }
 
-  Future<HttpResponse<NullResponse>> delScriptFold(String fileName, String path) async {
+  Future<HttpResponse<NullResponse>> delScriptFold(String fileName, String? path) async {
+    String safePath = _cleanPath(path);
+    String safeName = _cleanFileName(fileName);
+
     return await getIt<Http>(instanceName: index.toString()).delete<NullResponse>(
       getIt<Url>(instanceName: index.toString()).scriptDetail,
-      {"filename": fileName, "path": path, "type": "directory"},
+      {"filename": safeName, "path": safePath, "type": "directory"},
     );
   }
 
-  Future<HttpResponse<NullResponse>> addScriptFolder(String fileName, String path) async {
+  Future<HttpResponse<NullResponse>> addScriptFolder(String fileName, String? path) async {
+    String safePath = _cleanPath(path);
+
     return await getIt<Http>(instanceName: index.toString()).post<NullResponse>(
       getIt<Url>(instanceName: index.toString()).scriptDetail,
       {
         "directory": fileName,
-        "path": path,
+        "path": safePath,
       },
     );
   }
 
-  Future<HttpResponse<NullResponse>> delScriptNewVersion(String fileName, String path) async {
+  Future<HttpResponse<NullResponse>> delScriptNewVersion(String fileName, String? path) async {
+    String safePath = _cleanPath(path);
+    String safeName = _cleanFileName(fileName);
+
     return await getIt<Http>(instanceName: index.toString()).delete<NullResponse>(
       getIt<Url>(instanceName: index.toString()).scriptDetail,
-      {"filename": fileName, "path": path, "type": "file"},
+      {"filename": safeName, "path": safePath, "type": "file"},
     );
   }
 
   Future<HttpResponse<String>> scriptDetail(String name, String? path) async {
-    return await getIt<Http>(instanceName: index.toString()).get<String>(
-      getIt<Url>(instanceName: index.toString()).scriptDetailForReadFile + name,
+    String safePath = _cleanPath(path);
+    String safeName = _cleanFileName(name);
+
+    var http = getIt<Http>(instanceName: index.toString());
+    var url = getIt<Url>(instanceName: index.toString());
+
+    // 1. Try standard new API: GET /open/scripts/detail?file=demo.js&path=sub
+    Map<String, String?> query1 = {
+      "file": safeName,
+    };
+    if (safePath.isNotEmpty) {
+      query1["path"] = safePath;
+    }
+
+    var response = await http.getScriptContent(
+      url.scriptDetailNew,
+      query1,
+    );
+
+    if (response.success) {
+      return response;
+    }
+
+    // 2. Try with path: "" explicitly if safePath is empty
+    if (safePath.isEmpty) {
+      var response2 = await http.getScriptContent(
+        url.scriptDetailNew,
+        {
+          "file": safeName,
+          "path": "",
+        },
+      );
+      if (response2.success) {
+        return response2;
+      }
+    }
+
+    // 3. Try with combined relative path in 'file' if in a subdirectory
+    if (safePath.isNotEmpty) {
+      var response3 = await http.getScriptContent(
+        url.scriptDetailNew,
+        {
+          "file": "$safePath/$safeName",
+        },
+      );
+      if (response3.success) {
+        return response3;
+      }
+    }
+
+    // 4. Try with 'path' query parameter if server expects 'path' instead of 'file'
+    var response4 = await http.getScriptContent(
+      url.scriptDetailNew,
       {
-        "path": path,
+        "path": safePath.isNotEmpty ? "$safePath/$safeName" : safeName,
       },
     );
+    if (response4.success) {
+      return response4;
+    }
+
+    // 5. Only if the endpoint returned 404 (indicating an older Qinglong panel < 2.13), try legacy path
+    if (response.code == 404) {
+      var fallbackResponse = await http.getScriptContent(
+        url.scriptDetailForReadFile + safeName,
+        safePath.isNotEmpty ? {"path": safePath} : null,
+      );
+      if (fallbackResponse.success) {
+        return fallbackResponse;
+      }
+    }
+
+    return response;
   }
 
   Future<HttpResponse<List<DependencyBean>>> dependencies(String type) async {
@@ -530,12 +644,13 @@ class Api {
     );
   }
 
-  Future<HttpResponse<NullResponse>> addScript(String name, String path, String content) async {
+  Future<HttpResponse<NullResponse>> addScript(String name, String? path, String content) async {
     return await getIt<Http>(instanceName: index.toString()).post<NullResponse>(
       getIt<Url>(instanceName: index.toString()).addScript,
       {
         "filename": name,
-        "path": path,
+        "file": name,
+        "path": path ?? "",
         "content": content,
       },
     );

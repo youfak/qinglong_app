@@ -119,6 +119,83 @@ class Utils {
   }
 }
 
+class ScriptPathInfo {
+  final String title;
+  final String path;
+
+  ScriptPathInfo({required this.title, required this.path});
+
+  static ScriptPathInfo parse(String? command) {
+    if (command == null || command.isEmpty) {
+      return ScriptPathInfo(title: "", path: "");
+    }
+
+    // Strip leading 'task ' or other runner prefixes
+    String raw = command.trim();
+    if (raw.startsWith(RegExp(r'^task\s+'))) {
+      raw = raw.replaceFirst(RegExp(r'^task\s+'), '').trim();
+    }
+
+    // Take the script path token (before any extra arguments like 'now', 'desi')
+    String fullPath = raw.split(RegExp(r'\s+')).first.trim();
+
+    // Remove query strings if any
+    if (fullPath.contains('?')) {
+      fullPath = fullPath.split('?').first;
+    }
+
+    // Normalize Windows backslashes to forward slashes
+    fullPath = fullPath.replaceAll('\\', '/');
+
+    // Remove known absolute prefixes for Qinglong container scripts
+    if (fullPath.startsWith('/ql/data/scripts/')) {
+      fullPath = fullPath.substring('/ql/data/scripts/'.length);
+    } else if (fullPath.startsWith('/ql/scripts/')) {
+      fullPath = fullPath.substring('/ql/scripts/'.length);
+    } else if (fullPath.startsWith('ql/data/scripts/')) {
+      fullPath = fullPath.substring('ql/data/scripts/'.length);
+    } else if (fullPath.startsWith('ql/scripts/')) {
+      fullPath = fullPath.substring('ql/scripts/'.length);
+    }
+
+    // Remove leading ./ or /
+    while (fullPath.startsWith('./') || fullPath.startsWith('/')) {
+      if (fullPath.startsWith('./')) {
+        fullPath = fullPath.substring(2);
+      } else if (fullPath.startsWith('/')) {
+        fullPath = fullPath.substring(1);
+      }
+    }
+
+    // Remove trailing slashes
+    while (fullPath.endsWith('/')) {
+      fullPath = fullPath.substring(0, fullPath.length - 1);
+    }
+
+    int lastSlash = fullPath.lastIndexOf('/');
+    String title;
+    String dir;
+    if (lastSlash == -1) {
+      title = fullPath;
+      dir = "";
+    } else {
+      title = fullPath.substring(lastSlash + 1);
+      dir = fullPath.substring(0, lastSlash);
+    }
+
+    // Ensure dir has no leading or trailing slashes
+    dir = dir.trim();
+    while (dir.startsWith('/')) {
+      dir = dir.substring(1);
+    }
+    while (dir.endsWith('/')) {
+      dir = dir.substring(0, dir.length - 1);
+    }
+
+    return ScriptPathInfo(title: title.trim(), path: dir);
+  }
+}
+
 String getProviderName(BuildContext context) {
   return SingleAccountPageState.ofUserInfo(context).host ?? "";
 }

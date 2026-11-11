@@ -182,58 +182,45 @@ class ConfigCell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
-    return InkWell(
-      onTap: () {
-        Navigator.of(context).pushNamed(Routes.routeConfigDetail, arguments: {
-          "bean": bean,
-        });
-      },
-      child: SizedBox(
-        width: MediaQuery.of(context).size.width,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 15,
-                vertical: 8,
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 10,
-                    horizontal: 15,
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          bean.title ?? "",
-                          maxLines: 1,
-                          style: TextStyle(
-                            overflow: TextOverflow.ellipsis,
-                            color: ref.watch(themeProvider).themeColor.titleColor(),
-                            fontSize: 17,
-                          ),
-                        ),
-                      ),
-                      Image.asset(
-                        "assets/images/icon_right.png",
-                        fit: BoxFit.cover,
-                        width: 18,
-                      ),
-                    ],
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      child: Material(
+        color: ref.watch(themeProvider).themeColor.settingBgColor(),
+        borderRadius: BorderRadius.circular(12),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () {
+            Navigator.of(context).pushNamed(Routes.routeConfigDetail, arguments: {
+              "bean": bean,
+            });
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    bean.title ?? "",
+                    maxLines: 1,
+                    style: TextStyle(
+                      overflow: TextOverflow.ellipsis,
+                      color: ref.watch(themeProvider).themeColor.titleColor(),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
-              ),
+                Icon(
+                  CupertinoIcons.chevron_right,
+                  size: 16,
+                  color: ref.watch(themeProvider).themeColor.descColor(),
+                ),
+              ],
             ),
-            const Divider(
-              height: 1,
-              indent: 15,
-            ),
-          ],
+          ),
         ),
       ),
     );

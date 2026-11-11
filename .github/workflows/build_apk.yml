@@ -1,0 +1,85 @@
+name: Build Android APK
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    tags:
+      - 'v*'
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'Create a GitHub Release with this APK'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  build:
+    name: Build Release APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.7.12'
+          channel: 'stable'
+          cache: true
+
+      - name: Ensure Gradle Wrapper exists
+        run: |
+          cd android
+          if [ ! -f "gradlew" ] || [ ! -f "gradle/wrapper/gradle-wrapper.jar" ]; then
+            echo "Generating Gradle wrapper..."
+            gradle wrapper --gradle-version 6.7 --distribution-type all
+          fi
+          chmod +x gradlew
+          cd ..
+
+      - name: Ensure Keystore exists
+        run: |
+          if [ ! -f "android/app/qinglong.keystore" ]; then
+            echo "Generating release keystore..."
+            keytool -genkey -v -keystore android/app/qinglong.keystore \
+              -alias jiangyuesong \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -storepass jiangyuesong \
+              -keypass jiangyuesong \
+              -dname "CN=qinglong, OU=app, O=qinglong, L=Beijing, ST=Beijing, C=CN"
+          fi
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Android APK
+        run: flutter build apk --release
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: qinglong-app-release
+          path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.create_release == true)
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/app/outputs/flutter-apk/app-release.apk
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
