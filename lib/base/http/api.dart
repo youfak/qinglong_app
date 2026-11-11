@@ -119,17 +119,35 @@ class Api {
   }
 
   Future<HttpResponse<NullResponse>> deleteLogFold(String fileName, String path) async {
-    return await getIt<Http>(instanceName: index.toString()).delete<NullResponse>(
-      getIt<Url>(instanceName: index.toString()).logFoldDelete,
+    final url = getIt<Url>(instanceName: index.toString()).logFoldDelete;
+    var resp = await getIt<Http>(instanceName: index.toString()).delete<NullResponse>(
+      url,
       {"filename": fileName, "path": path, "type": "directory"},
     );
+    if (!resp.success && (resp.message?.contains("下线") == true || url.toString().startsWith("/open/"))) {
+      var fallback = await getIt<Http>(instanceName: index.toString()).delete<NullResponse>(
+        "/api/logs",
+        {"filename": fileName, "path": path, "type": "directory"},
+      );
+      if (fallback.success) return fallback;
+    }
+    return resp;
   }
 
   Future<HttpResponse<NullResponse>> deleteLog(String fileName, String path) async {
-    return await getIt<Http>(instanceName: index.toString()).delete<NullResponse>(
-      getIt<Url>(instanceName: index.toString()).logFoldDelete,
+    final url = getIt<Url>(instanceName: index.toString()).logFoldDelete;
+    var resp = await getIt<Http>(instanceName: index.toString()).delete<NullResponse>(
+      url,
       {"filename": fileName, "path": path, "type": "file"},
     );
+    if (!resp.success && (resp.message?.contains("下线") == true || url.toString().startsWith("/open/"))) {
+      var fallback = await getIt<Http>(instanceName: index.toString()).delete<NullResponse>(
+        "/api/logs",
+        {"filename": fileName, "path": path, "type": "file"},
+      );
+      if (fallback.success) return fallback;
+    }
+    return resp;
   }
 
   Future<HttpResponse<String>> subscribes() async {
@@ -442,22 +460,42 @@ class Api {
   }
 
   Future<HttpResponse<List<TaskLogBean>>> taskLog() async {
-    return await getIt<Http>(instanceName: index.toString()).get<List<TaskLogBean>>(getIt<Url>(instanceName: index.toString()).taskLog, null,
-        serializationName: getIt<SystemBean>(instanceName: index.toString()).isUpperVersion2_12_2() ? "data" : "dirs");
+    final serializationName = getIt<SystemBean>(instanceName: index.toString()).isUpperVersion2_12_2() ? "data" : "dirs";
+    final url = getIt<Url>(instanceName: index.toString()).taskLog;
+    var resp = await getIt<Http>(instanceName: index.toString()).get<List<TaskLogBean>>(
+      url,
+      null,
+      serializationName: serializationName,
+    );
+    // 降级机制：如果 /open/logs 返回接口下线或失败，自动尝试 /api/logs
+    if (!resp.success && (resp.message?.contains("下线") == true || resp.message?.contains("404") == true || url.toString().startsWith("/open/"))) {
+      var fallback = await getIt<Http>(instanceName: index.toString()).get<List<TaskLogBean>>(
+        "/api/logs",
+        null,
+        serializationName: serializationName,
+      );
+      if (fallback.success) {
+        return fallback;
+      }
+    }
+    return resp;
   }
 
   Future<HttpResponse<String>> taskLogDetail(String name, String path) async {
-    if (getIt<SystemBean>(instanceName: index.toString()).isUpperVersion2_13_0()) {
-      return await getIt<Http>(instanceName: index.toString()).get<String>(
-        getIt<Url>(instanceName: index.toString()).taskLogDetail + name + "?path=" + path,
-        null,
-      );
-    } else {
-      return await getIt<Http>(instanceName: index.toString()).get<String>(
-        getIt<Url>(instanceName: index.toString()).taskLogDetail + path + "/" + name,
-        null,
-      );
+    final isUpper = getIt<SystemBean>(instanceName: index.toString()).isUpperVersion2_13_0();
+    final baseUrl = getIt<Url>(instanceName: index.toString()).taskLogDetail;
+    final primaryPath = isUpper ? "$baseUrl$name?path=$path" : "$baseUrl$path/$name";
+
+    var resp = await getIt<Http>(instanceName: index.toString()).get<String>(primaryPath, null);
+    // 降级机制：如果返回接口下线或 404，自动降级到 /api/logs/
+    if (!resp.success && (resp.message?.contains("下线") == true || resp.message?.contains("404") == true || primaryPath.contains("/open/"))) {
+      final fallbackPath = isUpper ? "/api/logs/$name?path=$path" : "/api/logs/$path/$name";
+      var fallback = await getIt<Http>(instanceName: index.toString()).get<String>(fallbackPath, null);
+      if (fallback.success) {
+        return fallback;
+      }
     }
+    return resp;
   }
 
   Future<HttpResponse<List<ScriptData>>> scripts() async {
