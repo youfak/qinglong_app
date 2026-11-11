@@ -7,12 +7,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/ql_app_bar.dart';
 import 'package:qinglong_app/base/single_account_page.dart';
 import 'package:qinglong_app/base/theme.dart';
-import 'package:qinglong_app/base/ui/lazy_load_state.dart';
 import 'package:qinglong_app/base/ui/loading_widget.dart';
-import 'package:qinglong_app/module/subscribe/add_subscribe_page.dart';
 import 'package:qinglong_app/utils/extension.dart';
-
-import '../base/commit_button.dart';
 
 class PushSettingPage extends ConsumerStatefulWidget {
   const PushSettingPage({Key? key}) : super(key: key);
@@ -22,142 +18,533 @@ class PushSettingPage extends ConsumerStatefulWidget {
 }
 
 class _PushSettingPageState extends ConsumerState<PushSettingPage> {
-  List<PushBean> list = [];
-
+  final List<PushBean> list = [];
   PushBean? current;
   bool loading = true;
+  final Map<String, bool> _obscureMap = {};
 
   @override
   void initState() {
-    initData();
     super.initState();
+    initData();
     onLazyLoad();
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = ref.watch(themeProvider);
+    final isDark = theme.isDark();
+    final primaryColor = theme.primaryColor;
+    final cardBg = theme.themeColor.settingBgColor();
+    final titleColor = theme.themeColor.titleColor();
+    final descColor = theme.themeColor.descColor();
+    final borderColor = isDark
+        ? Colors.white.withOpacity(0.08)
+        : Colors.black.withOpacity(0.06);
+
+    final isClosed = current == null || current!.key == "已关闭";
+    final meta = getChannelMeta(current?.key ?? "已关闭");
+
     return Scaffold(
+      backgroundColor: theme.themeColor.bg2Color(),
       appBar: QlAppBar(
         title: "通知设置",
         actions: [
-          CommitButton(
-            onTap: () {
-              commit();
-            },
+          TextButton(
+            onPressed: commit,
+            child: Text(
+              "保存",
+              style: TextStyle(
+                color: primaryColor,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: loading
           ? const Center(child: LoadingWidget())
-          : SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 15,
-                  vertical: 10,
-                ),
-                child: SafeArea(
+          : ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              children: [
+                // 1. 当前渠道 Hero 状态卡片
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: cardBg,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: borderColor),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.02),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      const SizedBox(
-                        height: 10,
+                      Row(
+                        children: [
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: meta.color.withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              meta.icon,
+                              color: meta.color,
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      getNameByKey(current?.key ?? "已关闭"),
+                                      style: TextStyle(
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.bold,
+                                        color: titleColor,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: isClosed
+                                            ? Colors.grey.withOpacity(0.15)
+                                            : primaryColor.withOpacity(0.12),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Text(
+                                        isClosed ? "未启用" : "生效中",
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                          color: isClosed
+                                              ? descColor
+                                              : primaryColor,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  meta.subtitle,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: descColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                      const Text(
-                        "通知设置",
-                        style: TextStyle(
-                          fontSize: 14,
-                        ),
-                      ),
-                      const SizedBox(
-                        height: 10,
-                      ),
-                      DropdownButtonFormField<PushBean>(
-                        items: list
-                            .map<DropdownMenuItem<PushBean>>(
-                                (e) => DropdownMenuItem<PushBean>(
-                                      value: e,
-                                      child: Text(getNameByKey(e.name)),
-                                    ))
-                            .toList(),
-                        style: TextStyle(
-                          fontSize: 14,
-                          color:
-                              ref.watch(themeProvider).themeColor.title2Color(),
-                        ),
-                        decoration: const InputDecoration(
-                          isDense: true,
-                          contentPadding: EdgeInsets.symmetric(
+                      const SizedBox(height: 14),
+                      Divider(height: 1, color: borderColor),
+                      const SizedBox(height: 12),
+                      // 快捷切换渠道按钮
+                      InkWell(
+                        borderRadius: BorderRadius.circular(10),
+                        onTap: () => _showChannelPicker(context),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
                             vertical: 10,
-                            horizontal: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? Colors.white.withOpacity(0.04)
+                                : Colors.black.withOpacity(0.03),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: isDark
+                                  ? Colors.white.withOpacity(0.08)
+                                  : Colors.black.withOpacity(0.06),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                CupertinoIcons.arrow_2_squarepath,
+                                size: 16,
+                                color: primaryColor,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                "切换推送通道 (共 ${list.length} 个可用通道)",
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: primaryColor,
+                                ),
+                              ),
+                              const Spacer(),
+                              Icon(
+                                CupertinoIcons.chevron_right,
+                                size: 14,
+                                color: descColor,
+                              ),
+                            ],
                           ),
                         ),
-                        icon: const Icon(
-                          CupertinoIcons.chevron_up_chevron_down,
-                          size: 16,
-                        ),
-                        value: current,
-                        onChanged: (value) {
-                          current = value!;
-                          setState(() {});
-                        },
                       ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: current?.children
-                                .map(
-                                  (e) => Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const SizedBox(
-                                        height: 15,
-                                      ),
-                                      TitleWidget(
-                                        e.key,
-                                        required: e.required,
-                                      ),
-                                      const SizedBox(
-                                        height: 10,
-                                      ),
-                                      TextField(
-                                        controller: e.controller,
-                                        textAlignVertical:
-                                            TextAlignVertical.center,
-                                        decoration: InputDecoration(
-                                          hintText: "请输入${e.key}",
-                                        ),
-                                        autofocus: false,
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                      const SizedBox(
-                                        height: 10,
-                                      ),
-                                      Text(
-                                        e.name,
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: ref
-                                              .watch(themeProvider)
-                                              .themeColor
-                                              .descColor(),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                )
-                                .toList() ??
-                            [],
-                      )
                     ],
                   ),
                 ),
-              ),
+                const SizedBox(height: 20),
+
+                // 2. 字段配置区域
+                if (isClosed)
+                  Container(
+                    padding: const EdgeInsets.all(28),
+                    decoration: BoxDecoration(
+                      color: cardBg,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: borderColor),
+                    ),
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            CupertinoIcons.bell_slash,
+                            size: 48,
+                            color: descColor.withOpacity(0.4),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            "当前推送通道已关闭",
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: titleColor,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            "定时任务运行结果及通知将不会推送到任何第三方服务。\n点击上方“切换推送通道”可选择开启。",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: descColor,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else ...[
+                  Row(
+                    children: [
+                      Icon(
+                        CupertinoIcons.slider_horizontal_3,
+                        size: 15,
+                        color: primaryColor,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        "${getNameByKey(current!.key)} 参数配置",
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: descColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: cardBg,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: borderColor),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: current!.children.map((child) {
+                        final isPassword = child.key.toLowerCase().contains("key") ||
+                            child.key.toLowerCase().contains("token") ||
+                            child.key.toLowerCase().contains("secret") ||
+                            child.key.toLowerCase().contains("pass");
+                        final isObscure = _obscureMap[child.key] ?? isPassword;
+
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 18),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    child.key,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: titleColor,
+                                    ),
+                                  ),
+                                  if (child.required) ...[
+                                    const SizedBox(width: 4),
+                                    const Text(
+                                      "*",
+                                      style: TextStyle(
+                                        color: Colors.red,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                child.name,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: descColor,
+                                  height: 1.3,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              TextField(
+                                controller: child.controller,
+                                obscureText: isObscure,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: titleColor,
+                                  fontFamily: isPassword ? 'monospace' : null,
+                                ),
+                                decoration: InputDecoration(
+                                  hintText: "请输入 ${child.key}",
+                                  hintStyle: TextStyle(
+                                    fontSize: 13,
+                                    color: descColor.withOpacity(0.6),
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 12,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  suffixIcon: isPassword
+                                      ? IconButton(
+                                          icon: Icon(
+                                            isObscure
+                                                ? CupertinoIcons.eye_slash
+                                                : CupertinoIcons.eye,
+                                            size: 18,
+                                            color: descColor,
+                                          ),
+                                          onPressed: () {
+                                            setState(() {
+                                              _obscureMap[child.key] =
+                                                  !isObscure;
+                                            });
+                                          },
+                                        )
+                                      : null,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 28),
+
+                // 3. 底部保存大按钮
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    elevation: 2,
+                  ),
+                  onPressed: commit,
+                  child: const Text(
+                    "保存通知配置",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
             ),
+    );
+  }
+
+  // 现代 M3 渠道选择底部工作表
+  void _showChannelPicker(BuildContext context) {
+    final theme = ref.watch(themeProvider);
+    final cardBg = theme.themeColor.settingBgColor();
+    final titleColor = theme.themeColor.titleColor();
+    final descColor = theme.themeColor.descColor();
+    final primaryColor = theme.primaryColor;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: cardBg,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.75,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 12),
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(
+                    children: [
+                      Text(
+                        "选择推送通道",
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                          color: titleColor,
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        icon: const Icon(CupertinoIcons.xmark_circle_fill),
+                        color: descColor.withOpacity(0.4),
+                        onPressed: () => Navigator.of(ctx).pop(),
+                      ),
+                    ],
+                  ),
+                ),
+                Divider(height: 1, color: Colors.grey.withOpacity(0.15)),
+                Expanded(
+                  child: ListView.separated(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    itemCount: list.length,
+                    separatorBuilder: (_, __) => Divider(
+                      height: 1,
+                      indent: 52,
+                      color: Colors.grey.withOpacity(0.08),
+                    ),
+                    itemBuilder: (context, index) {
+                      final item = list[index];
+                      final isSelected = current?.key == item.key;
+                      final meta = getChannelMeta(item.key);
+
+                      return InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: () {
+                          setState(() {
+                            current = item;
+                          });
+                          Navigator.of(ctx).pop();
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 10,
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 36,
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  color: meta.color.withOpacity(0.12),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Icon(
+                                  meta.icon,
+                                  color: meta.color,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      getNameByKey(item.key),
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: isSelected
+                                            ? FontWeight.bold
+                                            : FontWeight.w500,
+                                        color: isSelected
+                                            ? primaryColor
+                                            : titleColor,
+                                      ),
+                                    ),
+                                    Text(
+                                      meta.subtitle,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: descColor,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              if (isSelected)
+                                Icon(
+                                  CupertinoIcons.checkmark_circle_fill,
+                                  color: primaryColor,
+                                  size: 20,
+                                ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -308,12 +695,16 @@ class _PushSettingPageState extends ConsumerState<PushSettingPage> {
 
     for (var entry in pushSetting.entries) {
       list.add(PushBean(
-          entry.key,
-          entry.key,
-          entry.value
-              .map((e) => PushChildBean(e["label"].toString(),
-                  e["tip"].toString(), (e["required"] ?? false) as bool))
-              .toList()));
+        entry.key,
+        entry.key,
+        entry.value
+            .map((e) => PushChildBean(
+                  e["label"].toString(),
+                  e["tip"].toString(),
+                  (e["required"] ?? false) as bool,
+                ))
+            .toList(),
+      ));
     }
   }
 
@@ -355,43 +746,46 @@ class _PushSettingPageState extends ConsumerState<PushSettingPage> {
       setState(() {
         loading = false;
       });
+    } else {
+      setState(() {
+        loading = false;
+      });
     }
   }
 
   void commit() async {
     if (current == null || current!.key == "已关闭") {
-      EasyLoading.show(status: "提交中");
-
+      EasyLoading.show(status: "正在保存...");
       var response =
           await SingleAccountPageState.ofApi(context).updateNotifcation({});
       EasyLoading.dismiss();
       if (response.success) {
-        "设置成功".toast();
+        "通知已关闭".toast();
         Navigator.of(context).pop();
       } else {
         response.message.toast();
       }
       return;
     }
+
     int? index = current?.children.indexWhere((element) =>
         element.controller.text.isEmpty && element.required == true);
     index ??= -1;
     if (index >= 0) {
-      ("${current?.children[index].key}为必填项").toast();
+      ("${current?.children[index].key} 为必填项").toast();
       return;
     }
 
-    EasyLoading.show(status: "提交中");
+    EasyLoading.show(status: "正在保存...");
 
     Map<String, dynamic> params = {};
-
     params["type"] = current!.key.toString();
     params.addAll(current!.children2Json());
     var response =
         await SingleAccountPageState.ofApi(context).updateNotifcation(params);
     EasyLoading.dismiss();
     if (response.success) {
-      "设置成功".toast();
+      "通知设置保存成功".toast();
       Navigator.of(context).pop();
     } else {
       response.message.toast();
@@ -408,7 +802,6 @@ class PushBean {
 
   Map<String, dynamic> children2Json() {
     Map<String, dynamic> data = {};
-
     for (var e in children) {
       data[e.key] =
           e.controller.text.isEmpty ? '' : e.controller.text.toString();
@@ -426,19 +819,116 @@ class PushChildBean {
   PushChildBean(this.key, this.name, this.required);
 }
 
+class ChannelMeta {
+  final IconData icon;
+  final Color color;
+  final String subtitle;
+
+  ChannelMeta(this.icon, this.color, this.subtitle);
+}
+
+ChannelMeta getChannelMeta(String key) {
+  switch (key) {
+    case "bark":
+      return ChannelMeta(
+        CupertinoIcons.device_phone_portrait,
+        const Color(0xff0EA5E9),
+        "iOS 自定义轻量即时推送",
+      );
+    case "telegramBot":
+      return ChannelMeta(
+        CupertinoIcons.paperplane_fill,
+        const Color(0xff2563EB),
+        "Telegram 官方机器人即时通知",
+      );
+    case "dingtalkBot":
+      return ChannelMeta(
+        CupertinoIcons.bolt_horizontal_circle_fill,
+        const Color(0xff0284C7),
+        "钉钉群自定义机器人 Webhook",
+      );
+    case "weWorkBot":
+      return ChannelMeta(
+        CupertinoIcons.chat_bubble_2_fill,
+        const Color(0xff16A34A),
+        "企业微信内部群机器人 Webhook",
+      );
+    case "weWorkApp":
+      return ChannelMeta(
+        CupertinoIcons.building_2_fill,
+        const Color(0xff059669),
+        "企业微信自建应用消息推送",
+      );
+    case "pushPlus":
+      return ChannelMeta(
+        CupertinoIcons.bubble_left_bubble_right_fill,
+        const Color(0xff10B981),
+        "PushPlus 微信模板消息推送",
+      );
+    case "serverChan":
+      return ChannelMeta(
+        CupertinoIcons.radiowaves_right,
+        const Color(0xffEC4899),
+        "Server酱·Turbo 微信/APP推送",
+      );
+    case "pushDeer":
+      return ChannelMeta(
+        CupertinoIcons.ant_fill,
+        const Color(0xffF97316),
+        "PushDeer 快马轻量推送",
+      );
+    case "email":
+      return ChannelMeta(
+        CupertinoIcons.mail_solid,
+        const Color(0xff8B5CF6),
+        "SMTP 邮箱邮件发送服务",
+      );
+    case "gotify":
+      return ChannelMeta(
+        CupertinoIcons.bell_fill,
+        const Color(0xff6366F1),
+        "Gotify 自建实时消息推送服务器",
+      );
+    case "goCqHttpBot":
+      return ChannelMeta(
+        CupertinoIcons.person_2_alt,
+        const Color(0xff14B8A6),
+        "go-cqhttp 个人或群 QQ 消息推送",
+      );
+    case "iGot":
+      return ChannelMeta(
+        CupertinoIcons.app_badge_fill,
+        const Color(0xffF43F5E),
+        "iGot 聚合消息推送",
+      );
+    case "chat":
+      return ChannelMeta(
+        CupertinoIcons.cube_box_fill,
+        const Color(0xffD97706),
+        "Synology 群晖 Chat 消息推送",
+      );
+    default:
+      return ChannelMeta(
+        CupertinoIcons.bell_slash_fill,
+        Colors.grey,
+        "未开启任何推送通知通道",
+      );
+  }
+}
+
 String getNameByKey(String key) {
   if (key == "gotify") {
-    return "gotify";
+    return "Gotify";
   } else if (key == "goCqHttpBot") {
-    return "goCqHttpBot";
+    return "go-cqhttp (QQ)";
   } else if (key == "serverChan") {
-    return "server酱";
+    return "Server酱";
   } else if (key == "pushDeer") {
     return "PushDeer";
   } else if (key == "bark") {
-    return "Bark";
+    return "Bark (iOS)";
   } else if (key == "telegramBot") {
-    return "Telegram机器人";
+    return "Telegram 机器人";
   } else if (key == "dingtalkBot") {
     return "钉钉机器人";
   } else if (key == "weWorkBot") {
@@ -446,14 +936,13 @@ String getNameByKey(String key) {
   } else if (key == "weWorkApp") {
     return "企业微信应用";
   } else if (key == "iGot") {
-    return "IGot";
+    return "iGot";
   } else if (key == "pushPlus") {
-    return "PushPlus";
+    return "PushPlus (微信)";
   } else if (key == "chat") {
-    return "群晖chat";
+    return "群晖 Chat";
   } else if (key == "email") {
-    return "邮箱";
+    return "电子邮箱 (SMTP)";
   }
-
   return "已关闭";
 }
