@@ -117,8 +117,9 @@ class ThemeViewModel extends ChangeNotifier {
           borderRadius: BorderRadius.circular(16),
         ),
       ),
-      floatingActionButtonTheme: const FloatingActionButtonThemeData().copyWith(
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: Colors.white,
+        foregroundColor: _primaryColor,
       ),
       scaffoldBackgroundColor: const Color(0xffffffff),
       inputDecorationTheme: InputDecorationTheme(
@@ -247,8 +248,9 @@ class ThemeViewModel extends ChangeNotifier {
           borderRadius: BorderRadius.circular(16),
         ),
       ),
-      floatingActionButtonTheme: const FloatingActionButtonThemeData().copyWith(
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: Colors.white,
+        foregroundColor: _primaryColor,
       ),
       scaffoldBackgroundColor: const Color(0xffffffff),
       inputDecorationTheme: InputDecorationTheme(
@@ -376,8 +378,9 @@ class ThemeViewModel extends ChangeNotifier {
           borderRadius: BorderRadius.circular(16),
         ),
       ),
-      floatingActionButtonTheme: const FloatingActionButtonThemeData().copyWith(
-        backgroundColor: Colors.white,
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: Color(0xFF1E2638),
+        foregroundColor: Color(0xFF10B981),
       ),
       brightness: Brightness.dark,
       primaryColor: const Color(0xffffffff),

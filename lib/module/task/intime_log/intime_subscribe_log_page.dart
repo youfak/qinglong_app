@@ -72,16 +72,18 @@ class _InTimeSubscribeLogPageState extends State<InTimeSubscribeLogPage> with La
   Widget build(BuildContext context) {
     return Builder(builder: (context) {
       return Scaffold(
-        floatingActionButton: FloatingActionButton(
-          mini: true,
+        floatingActionButton: FloatingActionButton.small(
+          backgroundColor: const Color(0xFF10B981),
+          foregroundColor: Colors.white,
           onPressed: () {
             setState(() {
               alwaysAuthScroll = !alwaysAuthScroll;
             });
           },
-          elevation: 2,
+          elevation: 3,
           child: Icon(
             alwaysAuthScroll ? CupertinoIcons.pause_circle : CupertinoIcons.play_circle,
+            color: Colors.white,
           ),
         ),
         appBar: QlAppBar(

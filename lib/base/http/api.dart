@@ -482,20 +482,45 @@ class Api {
   }
 
   Future<HttpResponse<String>> taskLogDetail(String name, String path) async {
+    final http = getIt<Http>(instanceName: index.toString());
+    final useSecret = getIt<UserInfoViewModel>(instanceName: index.toString()).useSecretLogined;
+    final cleanPath = path.trim();
+    final fullPath = cleanPath.isNotEmpty ? "$cleanPath/$name" : name;
+
+    // 1. 优先尝试青龙新版标准接口 /open/logs/detail 与 /api/logs/detail (使用 getScriptContent 兼容 json 与纯文本)
+    final detailEndpoints = useSecret
+        ? ["/open/logs/detail", "/api/logs/detail"]
+        : ["/api/logs/detail", "/open/logs/detail"];
+
+    for (final endpoint in detailEndpoints) {
+      // 尝试参数风格一: {file: name, path: cleanPath}
+      var resp = await http.getScriptContent(endpoint, {
+        "file": name,
+        "path": cleanPath,
+      });
+      if (resp.success && resp.bean != null) return resp;
+
+      // 尝试参数风格二: {path: fullPath}
+      var resp2 = await http.getScriptContent(endpoint, {
+        "path": fullPath,
+      });
+      if (resp2.success && resp2.bean != null) return resp2;
+    }
+
+    // 2. 尝试旧版本路径 /open/logs/ 或 /api/logs/
     final isUpper = getIt<SystemBean>(instanceName: index.toString()).isUpperVersion2_13_0();
     final baseUrl = getIt<Url>(instanceName: index.toString()).taskLogDetail;
-    final primaryPath = isUpper ? "$baseUrl$name?path=$path" : "$baseUrl$path/$name";
+    final primaryPath = isUpper ? "$baseUrl$name?path=$cleanPath" : "$baseUrl$cleanPath/$name";
 
-    var resp = await getIt<Http>(instanceName: index.toString()).get<String>(primaryPath, null);
-    // 降级机制：如果返回接口下线或 404，自动降级到 /api/logs/
-    if (!resp.success && (resp.message?.contains("下线") == true || resp.message?.contains("404") == true || primaryPath.contains("/open/"))) {
-      final fallbackPath = isUpper ? "/api/logs/$name?path=$path" : "/api/logs/$path/$name";
-      var fallback = await getIt<Http>(instanceName: index.toString()).get<String>(fallbackPath, null);
-      if (fallback.success) {
-        return fallback;
-      }
-    }
-    return resp;
+    var respLegacy = await http.getScriptContent(primaryPath, null);
+    if (respLegacy.success && respLegacy.bean != null) return respLegacy;
+
+    // 3. 尝试旧版本降级到 /api/logs/
+    final fallbackPath = isUpper ? "/api/logs/$name?path=$cleanPath" : "/api/logs/$cleanPath/$name";
+    var respLegacyFallback = await http.getScriptContent(fallbackPath, null);
+    if (respLegacyFallback.success && respLegacyFallback.bean != null) return respLegacyFallback;
+
+    return respLegacy;
   }
 
   Future<HttpResponse<List<ScriptData>>> scripts() async {
