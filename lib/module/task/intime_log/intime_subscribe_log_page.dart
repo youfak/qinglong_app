@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:ui';
 
-import 'package:extended_text/extended_text.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:qinglong_app/base/http/http.dart';
@@ -112,10 +111,9 @@ class _InTimeSubscribeLogPageState extends State<InTimeSubscribeLogPage> with La
                       controller: controller,
                       primary: true,
                       padding: const EdgeInsets.symmetric(horizontal: 15),
-                      child: ExtendedText(
+                      child: SelectableText(
                         content!,
                         selectionHeightStyle: BoxHeightStyle.max,
-                        selectionEnabled: true,
                         selectionWidthStyle: BoxWidthStyle.max,
                         style: const TextStyle(
                           fontSize: 12,

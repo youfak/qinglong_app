@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:ui';
 
-import 'package:extended_text/extended_text.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -152,10 +151,9 @@ class _InTimeLogPageState extends ConsumerState<InTimeLogPage> with LazyLoadStat
                         padding: const EdgeInsets.symmetric(horizontal: 15),
                         child: SizedBox(
                           width: MediaQuery.of(context).size.width,
-                          child: ExtendedText(
+                          child: SelectableText(
                             content!,
                             selectionHeightStyle: BoxHeightStyle.max,
-                            selectionEnabled: true,
                             selectionWidthStyle: BoxWidthStyle.max,
                             style: const TextStyle(
                               fontSize: 12,
