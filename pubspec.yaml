@@ -50,7 +50,6 @@ dependencies:
   launch_review: ^3.0.1
   flutter_scroll_to_top: ^2.3.0
   json_table: ^2.0.1
-  extended_text: ^9.1.2
   lottie: ^2.0.0
   quick_actions: ^1.0.1
   webview_flutter: 3.0.4

@@ -1203,8 +1203,8 @@ class TaskItemCell extends StatelessWidget {
                             child: Row(
                               children: [
                                 Icon(
-                                  CupertinoIcons.terminal,
-                                  size: 12,
+                                  Icons.terminal,
+                                  size: 13,
                                   color: descColor,
                                 ),
                                 const SizedBox(width: 6),
