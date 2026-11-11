@@ -142,7 +142,7 @@ class _IcloudPageState extends ConsumerState<IcloudPage>
                     const Spacer(),
                     InkWell(
                       borderRadius: BorderRadius.circular(8),
-                      onTap: lookUpFiles,
+                      onTap: () => lookUpFiles(title: "历史备份文件浏览"),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 6, vertical: 4),
@@ -199,7 +199,7 @@ class _IcloudPageState extends ConsumerState<IcloudPage>
                 setState(() {});
               } catch (_) {}
             },
-            onRestore: lookUpFiles,
+            onRestore: () => lookUpFiles(title: "环境变量历史备份"),
             onDelete: _handleDeleteBackup,
           ),
           const SizedBox(height: 18),
@@ -230,7 +230,7 @@ class _IcloudPageState extends ConsumerState<IcloudPage>
                 result.message?.toast();
               }
             },
-            onRestore: lookUpFiles,
+            onRestore: () => lookUpFiles(title: "系统配置历史备份"),
             onDelete: _handleDeleteBackup,
           ),
           const SizedBox(height: 18),
@@ -261,7 +261,7 @@ class _IcloudPageState extends ConsumerState<IcloudPage>
                 setState(() {});
               } catch (_) {}
             },
-            onRestore: lookUpFiles,
+            onRestore: () => lookUpFiles(title: "订阅数据历史备份"),
             onDelete: _handleDeleteBackup,
           ),
           const SizedBox(height: 18),
@@ -581,13 +581,18 @@ class _IcloudPageState extends ConsumerState<IcloudPage>
     return '${(bytes / pow(1024, i)).toStringAsFixed(decimals)}${suffixes[i]}';
   }
 
-  void lookUpFiles() async {
-    String path =
-        await FileUtil(SingleAccountPageState.of(context)?.index ?? 0)
-            .sourcePath;
+  void lookUpFiles({String? title}) async {
+    final fileUtil = FileUtil(SingleAccountPageState.of(context)?.index ?? 0);
+    String targetPath = await fileUtil.localPath;
+    if (!Directory(targetPath).existsSync()) {
+      targetPath = await fileUtil.sourcePath;
+    }
     Navigator.of(context).push(
       CupertinoPageRoute(
-        builder: (context) => FileDirectoryPage(path: path),
+        builder: (context) => FileDirectoryPage(
+          path: targetPath,
+          title: title ?? "历史备份目录",
+        ),
       ),
     );
   }
