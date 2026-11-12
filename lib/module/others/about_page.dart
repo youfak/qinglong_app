@@ -167,69 +167,6 @@ class _AboutPageState extends ConsumerState<AboutPage>
               ),
             ],
           ),
-          const SizedBox(height: 20),
-
-          // 3. 互动与支持
-          _buildSectionTitle("互联与支持", primaryColor, descColor),
-          const SizedBox(height: 8),
-          _buildCardGroup(
-            cardBg: cardBg,
-            borderColor: borderColor,
-            children: [
-              QlVisible(
-                child: _buildTile(
-                  icon: CupertinoIcons.heart_fill,
-                  iconColor: const Color(0xffEC4899),
-                  title: "在 App Store 给予五星好评",
-                  titleColor: titleColor,
-                  onTap: () {
-                    LaunchReview.launch(
-                        writeReview: false, iOSAppId: "1625871665");
-                  },
-                ),
-                childReplace: _buildTile(
-                  icon: CupertinoIcons.cloud_download_fill,
-                  iconColor: const Color(0xff06B6D4),
-                  title: "最新 APK 下载与发布频道",
-                  titleColor: titleColor,
-                  onTap: () => _launchURL("https://t.me/qinglongapp"),
-                ),
-              ),
-              _buildDivider(borderColor),
-              _buildTile(
-                icon: CupertinoIcons.paperplane_fill,
-                iconColor: const Color(0xff3B82F6),
-                title: "官方更新通知频道 (Telegram)",
-                titleColor: titleColor,
-                onTap: () => _launchURL("https://t.me/qinglongapp"),
-              ),
-              _buildDivider(borderColor),
-              _buildTile(
-                icon: CupertinoIcons.share,
-                iconColor: const Color(0xff8B5CF6),
-                title: "分享客户端给好友",
-                titleColor: titleColor,
-                onTap: () {
-                  if (Platform.isAndroid) {
-                    Share.share(
-                        "分享一款好用的青龙客户端，快去下载体验吧：https://t.me/qinglongapp");
-                  } else {
-                    Share.share(
-                        "分享一款好用的青龙客户端：https://apps.apple.com/us/app/id1625871665");
-                  }
-                },
-              ),
-              _buildDivider(borderColor),
-              _buildTile(
-                icon: CupertinoIcons.shield_lefthalf_fill,
-                iconColor: const Color(0xffF59E0B),
-                title: "用户协议与隐私保护",
-                titleColor: titleColor,
-                onTap: () =>
-                    _launchURL("https://newtab.work/PrivacyPolicy.html"),
-              ),
-            ],
-          ),
           const SizedBox(height: 36),
 
           // 底部声明

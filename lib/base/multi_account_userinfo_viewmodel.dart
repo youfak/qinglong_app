@@ -138,4 +138,29 @@ class MultiAccountUserInfoViewModel {
     tokenBeans.clear();
     tokenBeans.addAll(bean);
   }
+
+  void updateHostAndAlias(int index, String newHost, String newAlias) {
+    if (index < tokenBeans.length) {
+      String? oldHost = tokenBeans[index].host;
+      tokenBeans[index].host = newHost;
+      tokenBeans[index].alias = newAlias;
+      SpUtil.putString(spTokenBeanList, jsonEncode(tokenBeans));
+
+      final historyIdx = historyAccounts.indexWhere((element) => element.host == oldHost);
+      if (historyIdx >= 0) {
+        historyAccounts[historyIdx].host = newHost;
+        historyAccounts[historyIdx].alias = newAlias;
+        SpUtil.putString(spLoginHistory, jsonEncode(historyAccounts));
+      } else {
+        historyAccounts.insert(
+          0,
+          UserInfoBean(
+            host: newHost,
+            alias: newAlias,
+          ),
+        );
+        SpUtil.putString(spLoginHistory, jsonEncode(historyAccounts));
+      }
+    }
+  }
 }

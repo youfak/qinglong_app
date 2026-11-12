@@ -1,3 +1,4 @@
+import 'package:qinglong_app/base/http/http.dart';
 import 'package:qinglong_app/base/multi_account_userinfo_viewmodel.dart';
 
 import '../main.dart';
@@ -87,6 +88,17 @@ class UserInfoViewModel {
 
   void updateHost(String host) {
     _host = host;
+  }
+
+  void updateHostAndAlias(int index, String newHost, String newAlias) {
+    _host = newHost;
+    _alias = newAlias;
+    getIt<MultiAccountUserInfoViewModel>().updateHostAndAlias(index, newHost, newAlias);
+
+    if (getIt.isRegistered<Http>(instanceName: index.toString())) {
+      getIt.unregister<Http>(instanceName: index.toString());
+    }
+    getIt.registerSingleton(Http(newHost, index), instanceName: index.toString());
   }
 }
 

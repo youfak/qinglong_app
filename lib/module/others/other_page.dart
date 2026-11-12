@@ -427,20 +427,41 @@ class OtherPageState extends ConsumerState<OtherPage>
                     ),
                     const SizedBox(height: 4),
                     if (host.isNotEmpty)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: isDark ? const Color(0xff27272A) : const Color(0xffE2E8F0),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          host.replaceFirst(RegExp(r'^https?://'), ''),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 11,
-                            color: descColor,
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            PageRouteBuilder(
+                              pageBuilder: (context, animation1, animation2) =>
+                                  const ChangeAccountPage(),
+                              transitionDuration: Duration.zero,
+                              reverseTransitionDuration: Duration.zero,
+                            ),
+                          ).then((_) {
+                            if (mounted) setState(() {});
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xff27272A) : const Color(0xffE2E8F0),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                host.replaceFirst(RegExp(r'^https?://'), ''),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontFamily: 'monospace',
+                                  fontSize: 11,
+                                  color: descColor,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Icon(Icons.edit_outlined, size: 11, color: descColor.withOpacity(0.7)),
+                            ],
                           ),
                         ),
                       ),
@@ -465,7 +486,9 @@ class OtherPageState extends ConsumerState<OtherPage>
                       transitionDuration: Duration.zero,
                       reverseTransitionDuration: Duration.zero,
                     ),
-                  );
+                  ).then((_) {
+                    if (mounted) setState(() {});
+                  });
                 },
                 child: Icon(
                   CupertinoIcons.arrow_2_squarepath,
