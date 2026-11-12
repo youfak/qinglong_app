@@ -45,8 +45,8 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
     }
     try {
       final dio = Dio(BaseOptions(
-        connectTimeout: const Duration(seconds: 4),
-        receiveTimeout: const Duration(seconds: 4),
+        connectTimeout: 4000,
+        receiveTimeout: 4000,
         validateStatus: (status) => true,
       ));
       final resp = await dio.get('$clean/api/system');
