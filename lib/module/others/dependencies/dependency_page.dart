@@ -550,6 +550,12 @@ class _DepListViewState extends State<DepListView> with AutomaticKeepAliveClient
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    final query = widget.searchText.trim().toLowerCase();
+    final filteredList = widget.list.where((item) {
+      if (query.isEmpty) return true;
+      return item.name?.toLowerCase().contains(query) ?? false;
+    }).toList();
+
     return ListView.separated(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -559,32 +565,24 @@ class _DepListViewState extends State<DepListView> with AutomaticKeepAliveClient
         top: kToolbarHeight,
       ),
       itemBuilder: (context, index) {
-        DependencyBean item = widget.list[index];
-        if (widget.searchText.isEmpty || (item.name?.toLowerCase().contains(widget.searchText.toLowerCase()) ?? false)) {
-          return DependencyCell(
-            widget.type,
-            widget.list[index],
-            editMode: widget.editMode,
-            checkedCallback: (id) {
-              widget.changed(id);
-            },
-            checked: widget.checked.contains(widget.list[index].mustId),
-          );
-        } else {
-          return const SizedBox.shrink();
-        }
+        final item = filteredList[index];
+        return DependencyCell(
+          widget.type,
+          item,
+          key: ValueKey(item.mustId),
+          editMode: widget.editMode,
+          checkedCallback: (id) {
+            widget.changed(id);
+          },
+          checked: widget.checked.contains(item.mustId),
+        );
       },
-      itemCount: widget.list.length,
+      itemCount: filteredList.length,
       separatorBuilder: (BuildContext context, int index) {
-        DependencyBean item = widget.list[index];
-        if (widget.searchText.isEmpty || (item.name?.toLowerCase().contains(widget.searchText.toLowerCase()) ?? false)) {
-          return Divider(
-            height: 1,
-            indent: widget.editMode ? 55 : 15,
-          );
-        } else {
-          return const SizedBox.shrink();
-        }
+        return Divider(
+          height: 1,
+          indent: widget.editMode ? 55 : 15,
+        );
       },
     );
   }

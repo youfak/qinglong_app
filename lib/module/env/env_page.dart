@@ -816,6 +816,13 @@ class _EnvListViewState extends ConsumerState<EnvListView> with AutomaticKeepAli
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    final query = widget.searchText.trim().toLowerCase();
+    final filteredList = widget.list.where((value) {
+      if (query.isEmpty) return true;
+      return (value.name?.toLowerCase().contains(query) ?? false) ||
+          (value.value?.toLowerCase().contains(query) ?? false) ||
+          (value.remarks?.toLowerCase().contains(query) ?? false);
+    }).toList();
 
     return ListView.builder(
       padding: const EdgeInsets.only(
@@ -825,28 +832,21 @@ class _EnvListViewState extends ConsumerState<EnvListView> with AutomaticKeepAli
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemBuilder: (BuildContext context, int i) {
-        EnvBean value = widget.list[i];
-        if (widget.searchText.isEmpty ||
-            (value.name?.contains(widget.searchText) ?? false) ||
-            (value.value?.contains(widget.searchText) ?? false) ||
-            (value.remarks?.contains(widget.searchText) ?? false)) {
-          return EnvItemCell(
-            value,
-            i,
-            ref,
-            key: ValueKey(value.sId),
-            editMode: widget.editMode,
-            editMode2: false,
-            checkedCallback: (id) {
-              widget.changed(id);
-            },
-            checked: widget.checked.contains(value.sId),
-          );
-        } else {
-          return const SizedBox.shrink();
-        }
+        EnvBean value = filteredList[i];
+        return EnvItemCell(
+          value,
+          i,
+          ref,
+          key: ValueKey(value.sId),
+          editMode: widget.editMode,
+          editMode2: false,
+          checkedCallback: (id) {
+            widget.changed(id);
+          },
+          checked: widget.checked.contains(value.sId),
+        );
       },
-      itemCount: widget.list.length,
+      itemCount: filteredList.length,
     );
   }
 }

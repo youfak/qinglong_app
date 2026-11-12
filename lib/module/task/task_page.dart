@@ -869,6 +869,43 @@ class _ListBodyState extends ConsumerState<ListBodyWidget> with AutomaticKeepAli
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    final query = widget.searchText.trim().toLowerCase();
+    final filteredList = widget.list.where((item) {
+      if (query.isEmpty) return true;
+      return (item.name?.toLowerCase().contains(query) ?? false) ||
+          (item.command?.toLowerCase().contains(query) ?? false) ||
+          (item.schedule?.toLowerCase().contains(query) ?? false);
+    }).toList();
+
+    if (filteredList.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: EdgeInsets.only(
+            top: widget.onlyShowPullRepo ? 80 : kToolbarHeight + 60,
+            bottom: 40,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                CupertinoIcons.search,
+                size: 44,
+                color: Theme.of(context).disabledColor.withOpacity(0.4),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                query.isEmpty ? "暂无任务" : "未搜索到匹配任务",
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Theme.of(context).disabledColor,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return ListView.separated(
       padding: EdgeInsets.only(
         bottom: kBottomNavigationBarHeight + 50,
@@ -878,25 +915,19 @@ class _ListBodyState extends ConsumerState<ListBodyWidget> with AutomaticKeepAli
       physics: const NeverScrollableScrollPhysics(),
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       itemBuilder: (context, index) {
-        TaskBean item = widget.list[index];
-        if (widget.searchText.isEmpty ||
-            (item.name?.toLowerCase().contains(widget.searchText.toLowerCase()) ?? false) ||
-            (item.command?.toLowerCase().contains(widget.searchText.toLowerCase()) ?? false) ||
-            (item.schedule?.contains(widget.searchText.toLowerCase()) ?? false)) {
-          return TaskItemCell(
-            item,
-            ref,
-            editMode: widget.editMode,
-            checkedCallback: (id) {
-              widget.changed(id);
-            },
-            checked: widget.checked.contains(widget.list[index].sId),
-          );
-        } else {
-          return const SizedBox.shrink();
-        }
+        final item = filteredList[index];
+        return TaskItemCell(
+          item,
+          ref,
+          key: ValueKey(item.sId ?? "${item.name}_$index"),
+          editMode: widget.editMode,
+          checkedCallback: (id) {
+            widget.changed(id);
+          },
+          checked: widget.checked.contains(item.sId),
+        );
       },
-      itemCount: widget.list.length,
+      itemCount: filteredList.length,
       separatorBuilder: (BuildContext context, int index) {
         return const SizedBox(height: 2);
       },
