@@ -1,4 +1,4 @@
-package work.newtab.qinglong
+package com.youfak.qinglong
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 
