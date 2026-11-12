@@ -35,6 +35,11 @@ class _InTimeHistoryLogPageState extends ConsumerState<InTimeHistoryLogPage> wit
   bool isLoading = true;
   final ScrollController _scrollController = ScrollController();
 
+  bool _isSearching = false;
+  final TextEditingController _searchController = TextEditingController();
+  final List<int> _matches = [];
+  int _currentMatchIndex = -1;
+
   Future<void> getLogData() async {
     setState(() => isLoading = true);
     try {
@@ -45,6 +50,9 @@ class _InTimeHistoryLogPageState extends ConsumerState<InTimeHistoryLogPage> wit
 
       if (response.success) {
         content = response.bean;
+        if (_isSearching && _searchController.text.isNotEmpty) {
+          _performSearch(_searchController.text);
+        }
       } else {
         final msg = response.message ?? "获取日志失败";
         msg.toast();
@@ -58,6 +66,7 @@ class _InTimeHistoryLogPageState extends ConsumerState<InTimeHistoryLogPage> wit
 
   @override
   void dispose() {
+    _searchController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -80,6 +89,237 @@ class _InTimeHistoryLogPageState extends ConsumerState<InTimeHistoryLogPage> wit
         curve: Curves.easeOut,
       );
     }
+  }
+
+  void _performSearch(String query) {
+    _matches.clear();
+    final trimmed = query.trim();
+    if (trimmed.isEmpty || content == null || content!.isEmpty) {
+      setState(() {
+        _currentMatchIndex = -1;
+      });
+      return;
+    }
+
+    final textLower = content!.toLowerCase();
+    final queryLower = trimmed.toLowerCase();
+    int startIndex = 0;
+    while (true) {
+      final index = textLower.indexOf(queryLower, startIndex);
+      if (index == -1) break;
+      _matches.add(index);
+      startIndex = index + queryLower.length;
+      if (_matches.length >= 1000) break;
+    }
+
+    setState(() {
+      _currentMatchIndex = _matches.isNotEmpty ? 0 : -1;
+    });
+    if (_matches.isNotEmpty) {
+      _scrollToCurrentMatch();
+    }
+  }
+
+  void _nextMatch() {
+    if (_matches.isEmpty) return;
+    setState(() {
+      _currentMatchIndex = (_currentMatchIndex + 1) % _matches.length;
+    });
+    _scrollToCurrentMatch();
+  }
+
+  void _prevMatch() {
+    if (_matches.isEmpty) return;
+    setState(() {
+      _currentMatchIndex =
+          (_currentMatchIndex - 1 + _matches.length) % _matches.length;
+    });
+    _scrollToCurrentMatch();
+  }
+
+  void _scrollToCurrentMatch() {
+    if (_currentMatchIndex < 0 ||
+        _currentMatchIndex >= _matches.length ||
+        content == null) return;
+    if (!_scrollController.hasClients) return;
+
+    final charOffset = _matches[_currentMatchIndex];
+    final prefix = content!.substring(0, charOffset);
+    final lineNum = prefix.split('\n').length - 1;
+    final totalLines = content!.split('\n').length;
+
+    if (totalLines > 1) {
+      final maxScroll = _scrollController.position.maxScrollExtent;
+      final target =
+          ((lineNum - 2).clamp(0, totalLines) / totalLines) * maxScroll;
+      _scrollController.animateTo(
+        target.clamp(0.0, maxScroll),
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
+  Widget _buildSearchBar(BuildContext context, bool isDark, Color primaryColor) {
+    final bg = isDark ? const Color(0xFF1E2638) : Colors.white;
+    final border = isDark ? const Color(0x33FFFFFF) : const Color(0x1F000000);
+    final textCol = isDark ? Colors.white : const Color(0xFF1E293B);
+    final subCol = isDark ? Colors.white54 : const Color(0xFF64748B);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: bg,
+        border: Border(bottom: BorderSide(color: border)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              height: 36,
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: TextField(
+                controller: _searchController,
+                autofocus: true,
+                style: TextStyle(fontSize: 13, color: textCol),
+                decoration: InputDecoration(
+                  hintText: "在日志中查找...",
+                  hintStyle: TextStyle(fontSize: 12.5, color: subCol),
+                  border: InputBorder.none,
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  prefixIcon: Icon(CupertinoIcons.search, size: 15, color: subCol),
+                  suffixIcon: _searchController.text.isNotEmpty
+                      ? GestureDetector(
+                          onTap: () {
+                            _searchController.clear();
+                            _performSearch("");
+                          },
+                          child: Icon(CupertinoIcons.clear_circled_solid,
+                              size: 15, color: subCol),
+                        )
+                      : null,
+                ),
+                onChanged: _performSearch,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+            decoration: BoxDecoration(
+              color: _matches.isNotEmpty
+                  ? primaryColor.withOpacity(0.12)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              _searchController.text.isEmpty
+                  ? ""
+                  : _matches.isEmpty
+                      ? "无结果"
+                      : "${_currentMatchIndex + 1}/${_matches.length}",
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.bold,
+                color: _matches.isNotEmpty ? primaryColor : subCol,
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
+          IconButton(
+            icon: const Icon(CupertinoIcons.chevron_up, size: 18),
+            tooltip: "上一个匹配",
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+            onPressed: _matches.isNotEmpty ? _prevMatch : null,
+            color: textCol,
+          ),
+          IconButton(
+            icon: const Icon(CupertinoIcons.chevron_down, size: 18),
+            tooltip: "下一个匹配",
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+            onPressed: _matches.isNotEmpty ? _nextMatch : null,
+            color: textCol,
+          ),
+          IconButton(
+            icon: const Icon(CupertinoIcons.xmark, size: 16),
+            tooltip: "关闭搜索",
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+            onPressed: () {
+              setState(() {
+                _isSearching = false;
+                _searchController.clear();
+                _matches.clear();
+                _currentMatchIndex = -1;
+              });
+            },
+            color: subCol,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLogContent(bool isDark, Color primaryColor) {
+    final baseStyle = TextStyle(
+      fontFamily: 'monospace',
+      fontSize: 12.5,
+      height: 1.5,
+      color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF1E293B),
+    );
+
+    final query = _searchController.text.trim();
+    if (!_isSearching || query.isEmpty || _matches.isEmpty) {
+      return SelectableText(
+        content!,
+        style: baseStyle,
+      );
+    }
+
+    final highlightBg =
+        isDark ? const Color(0x66EAB308) : const Color(0x66F59E0B);
+    final activeBg = isDark ? const Color(0xFFF59E0B) : const Color(0xFFD97706);
+
+    List<TextSpan> spans = [];
+    int lastIndex = 0;
+    final queryLen = query.length;
+
+    for (int i = 0; i < _matches.length; i++) {
+      final start = _matches[i];
+      if (start > lastIndex) {
+        spans.add(TextSpan(text: content!.substring(lastIndex, start)));
+      }
+      final isCur = i == _currentMatchIndex;
+      spans.add(TextSpan(
+        text: content!.substring(start, start + queryLen),
+        style: TextStyle(
+          backgroundColor: isCur ? activeBg : highlightBg,
+          color: isCur ? Colors.black : (isDark ? Colors.white : Colors.black),
+          fontWeight: isCur ? FontWeight.bold : FontWeight.w600,
+        ),
+      ));
+      lastIndex = start + queryLen;
+    }
+    if (lastIndex < content!.length) {
+      spans.add(TextSpan(text: content!.substring(lastIndex)));
+    }
+
+    return SelectableText.rich(
+      TextSpan(children: spans, style: baseStyle),
+    );
   }
 
   @override
@@ -118,6 +358,26 @@ class _InTimeHistoryLogPageState extends ConsumerState<InTimeHistoryLogPage> wit
         canBack: true,
         title: widget.title,
         actions: [
+          IconButton(
+            icon: Icon(
+              _isSearching
+                  ? CupertinoIcons.search_circle_fill
+                  : CupertinoIcons.search,
+              size: 20,
+            ),
+            tooltip: _isSearching ? "关闭搜索" : "在日志中搜索",
+            color: _isSearching ? primaryColor : null,
+            onPressed: () {
+              setState(() {
+                _isSearching = !_isSearching;
+                if (!_isSearching) {
+                  _searchController.clear();
+                  _matches.clear();
+                  _currentMatchIndex = -1;
+                }
+              });
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.copy_rounded, size: 18),
             tooltip: "复制全部日志",
@@ -208,33 +468,33 @@ class _InTimeHistoryLogPageState extends ConsumerState<InTimeHistoryLogPage> wit
                     ],
                   ),
                 )
-              : SafeArea(
-                  child: Container(
-                    margin: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF0B0F19) : Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: isDark ? const Color(0x1AFFFFFF) : const Color(0x0F000000),
-                      ),
-                    ),
-                    child: CupertinoScrollbar(
-                      controller: _scrollController,
-                      child: SingleChildScrollView(
-                        controller: _scrollController,
-                        padding: const EdgeInsets.all(14),
-                        child: SelectableText(
-                          content!,
-                          style: TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 12.5,
-                            height: 1.5,
-                            color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF1E293B),
+              : Column(
+                  children: [
+                    if (_isSearching) _buildSearchBar(context, isDark, primaryColor),
+                    Expanded(
+                      child: SafeArea(
+                        top: false,
+                        child: Container(
+                          margin: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF0B0F19) : Colors.white,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: isDark ? const Color(0x1AFFFFFF) : const Color(0x0F000000),
+                            ),
+                          ),
+                          child: CupertinoScrollbar(
+                            controller: _scrollController,
+                            child: SingleChildScrollView(
+                              controller: _scrollController,
+                              padding: const EdgeInsets.all(14),
+                              child: _buildLogContent(isDark, primaryColor),
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
     );
   }

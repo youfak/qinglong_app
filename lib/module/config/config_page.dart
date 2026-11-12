@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qinglong_app/base/base_state_widget.dart';
 import 'package:qinglong_app/base/http/http.dart';
@@ -202,12 +203,36 @@ class ConfigPageState extends ConsumerState<ConfigPage>
                                   arguments: {"bean": value},
                                 ).then((_) => loadConfigData(context));
                               },
-                              onEdit: () {
+                              onEdit: () async {
+                                final title = value.title ?? "";
+                                if (title.isEmpty) return;
+
+                                String? targetContent;
+                                if (title.toLowerCase() == "config.sh" && configContent != null) {
+                                  targetContent = configContent;
+                                } else {
+                                  EasyLoading.show(status: "获取配置中...");
+                                  try {
+                                    final res = await SingleAccountPageState.ofApi(context).content(title);
+                                    EasyLoading.dismiss();
+                                    if (res.success && res.bean != null) {
+                                      targetContent = res.bean;
+                                    } else {
+                                      (res.message ?? "获取文件内容失败").toast();
+                                      return;
+                                    }
+                                  } catch (e) {
+                                    EasyLoading.dismiss();
+                                    "获取文件内容失败".toast();
+                                    return;
+                                  }
+                                }
+
                                 Navigator.of(context).pushNamed(
                                   Routes.routeConfigEdit,
                                   arguments: {
-                                    "title": value.title,
-                                    "content": configContent,
+                                    "title": title,
+                                    "content": targetContent,
                                   },
                                 ).then((_) {
                                   Future.delayed(
