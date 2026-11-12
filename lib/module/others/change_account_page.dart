@@ -419,7 +419,7 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      "轻触卡片立即切换活动实例，支持修改连接地址与别名",
+                      "轻触卡片切换实例，左滑卡片可修改配置或删除",
                       style: TextStyle(
                         color: descColor,
                         fontSize: 13,
@@ -497,7 +497,146 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
         : "未设置服务器地址";
     final isLogined = userInfo.token != null && userInfo.token!.isNotEmpty;
 
-    Widget cardContent = Container(
+    final hasHost = userInfo.host != null && userInfo.host!.isNotEmpty;
+
+    final innerContent = Material(
+      color: cardBg,
+      child: InkWell(
+        onTap: () {
+          context
+              .findAncestorStateOfType<MultiAccountPageState>()
+              ?.updateIndex(index);
+          Navigator.of(context).pop();
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+          child: Row(
+            children: [
+              // 状态/服务器图标
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      (isActive ? primaryColor : descColor).withOpacity(0.18),
+                      (isActive ? primaryColor : descColor).withOpacity(0.06),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.dns_rounded,
+                  color: isActive ? primaryColor : descColor,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 14),
+
+              // 别名与主机
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            alias,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: titleColor,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (isActive) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: primaryColor.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              "活跃",
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: primaryColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      host,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: descColor,
+                        fontFamily: 'monospace',
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+
+              // 登录状态指示
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isLogined
+                      ? primaryColor.withOpacity(0.1)
+                      : const Color(0xffEF4444).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: isLogined
+                            ? primaryColor
+                            : const Color(0xffEF4444),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      isLogined ? "在线" : "未登录",
+                      style: TextStyle(
+                        color: isLogined
+                            ? primaryColor
+                            : const Color(0xffEF4444),
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    return Container(
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(16),
@@ -515,219 +654,68 @@ class _ChangeAccountPageState extends ConsumerState<ChangeAccountPage> {
           ),
         ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () {
-            context
-                .findAncestorStateOfType<MultiAccountPageState>()
-                ?.updateIndex(index);
-            Navigator.of(context).pop();
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                // 状态/服务器图标
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        (isActive ? primaryColor : descColor).withOpacity(0.18),
-                        (isActive ? primaryColor : descColor).withOpacity(0.06),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    Icons.dns_rounded,
-                    color: isActive ? primaryColor : descColor,
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(width: 14),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(15),
+        child: Slidable(
+          key: ValueKey("account_${index}_${userInfo.host}"),
+          endActionPane: ActionPane(
+            motion: const BehindMotion(),
+            extentRatio: hasHost ? 0.46 : 0.24,
+            children: [
+              SlidableAction(
+                backgroundColor: const Color(0xff3B82F6),
+                foregroundColor: Colors.white,
+                icon: CupertinoIcons.pencil,
+                label: "修改",
+                onPressed: (_) => _showEditHostDialog(context, userInfo, index),
+              ),
+              if (hasHost)
+                SlidableAction(
+                  backgroundColor: const Color(0xffEF4444),
+                  foregroundColor: Colors.white,
+                  icon: CupertinoIcons.delete,
+                  label: "删除",
+                  onPressed: (_) {
+                    if (userInfo.token != null && userInfo.token!.isNotEmpty) {
+                      "请先退出该账号登录，再执行删除".toast();
+                      return;
+                    }
 
-                // 别名与主机
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              alias,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: titleColor,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                    showCupertinoDialog(
+                      context: context,
+                      useRootNavigator: false,
+                      builder: (childContext) => CupertinoAlertDialog(
+                        title: const Text("确认移除账号"),
+                        content: Text("确定从列表中移除「$alias」吗？"),
+                        actions: [
+                          CupertinoDialogAction(
+                            child: const Text("取消",
+                                style: TextStyle(color: Color(0xff999999))),
+                            onPressed: () => Navigator.of(childContext).pop(),
                           ),
-                          if (isActive) ...[
-                            const SizedBox(width: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: primaryColor.withOpacity(0.15),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                "活跃",
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  color: primaryColor,
-                                ),
-                              ),
-                            ),
-                          ],
+                          CupertinoDialogAction(
+                            isDestructiveAction: true,
+                            child: const Text("移除"),
+                            onPressed: () {
+                              Navigator.of(childContext).pop();
+                              getIt<MultiAccountUserInfoViewModel>()
+                                  .removeHistoryAccount(userInfo.host);
+                              getIt<UserInfoViewModel>(
+                                      instanceName: index.toString())
+                                  .clearCurrentInfo(index);
+                              setState(() {});
+                            },
+                          ),
                         ],
                       ),
-                      const SizedBox(height: 3),
-                      Text(
-                        host,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: descColor,
-                          fontFamily: 'monospace',
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
+                    );
+                  },
                 ),
-                const SizedBox(width: 6),
-
-                // 登录状态指示
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: isLogined
-                        ? primaryColor.withOpacity(0.1)
-                        : const Color(0xffEF4444).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: isLogined
-                              ? primaryColor
-                              : const Color(0xffEF4444),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 5),
-                      Text(
-                        isLogined ? "在线" : "未登录",
-                        style: TextStyle(
-                          color: isLogined
-                              ? primaryColor
-                              : const Color(0xffEF4444),
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // 修改连接地址按钮
-                IconButton(
-                  icon: const Icon(Icons.edit_note_rounded, size: 22),
-                  tooltip: "修改连接地址与配置",
-                  color: descColor.withOpacity(0.7),
-                  padding: const EdgeInsets.only(left: 4),
-                  constraints: const BoxConstraints(),
-                  onPressed: () => _showEditHostDialog(context, userInfo, index),
-                ),
-              ],
-            ),
+            ],
           ),
+          child: innerContent,
         ),
       ),
-    );
-
-    if (userInfo.host == null || userInfo.host!.isEmpty) {
-      return cardContent;
-    }
-
-    return Slidable(
-      key: ValueKey(userInfo.host),
-      endActionPane: ActionPane(
-        motion: const StretchMotion(),
-        extentRatio: 0.44,
-        children: [
-          SlidableAction(
-            borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
-            backgroundColor: const Color(0xff3B82F6),
-            foregroundColor: Colors.white,
-            icon: Icons.edit_rounded,
-            label: "修改地址",
-            onPressed: (_) => _showEditHostDialog(context, userInfo, index),
-          ),
-          SlidableAction(
-            borderRadius: const BorderRadius.horizontal(right: Radius.circular(16)),
-            backgroundColor: const Color(0xffEF4444),
-            foregroundColor: Colors.white,
-            icon: CupertinoIcons.delete,
-            label: "删除",
-            onPressed: (_) {
-              if (userInfo.token != null && userInfo.token!.isNotEmpty) {
-                "请先退出该账号登录，再执行删除".toast();
-                return;
-              }
-
-              showCupertinoDialog(
-                context: context,
-                useRootNavigator: false,
-                builder: (childContext) => CupertinoAlertDialog(
-                  title: const Text("确认移除账号"),
-                  content: Text("确定从列表中移除「$alias」吗？"),
-                  actions: [
-                    CupertinoDialogAction(
-                      child: const Text("取消",
-                          style: TextStyle(color: Color(0xff999999))),
-                      onPressed: () => Navigator.of(childContext).pop(),
-                    ),
-                    CupertinoDialogAction(
-                      isDestructiveAction: true,
-                      child: const Text("移除"),
-                      onPressed: () {
-                        Navigator.of(childContext).pop();
-                        getIt<MultiAccountUserInfoViewModel>()
-                            .removeHistoryAccount(userInfo.host);
-                        getIt<UserInfoViewModel>(
-                                instanceName: index.toString())
-                            .clearCurrentInfo(index);
-                        setState(() {});
-                      },
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-      child: cardContent,
     );
   }
 
